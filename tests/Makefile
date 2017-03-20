@@ -176,12 +176,34 @@ all: $(BINARIES)
 
 clean:
 ifndef WINDOWS
-	rm -f $(APPS) *.c
+	rm -rf $(APPS) *.c TESTS
 else
-	del /Q /F *.c *.exe
+	del /Q /F *.c *.exe TESTS
 endif
 
 check: $(BINARIES)
 	perl scripts/run-test-suites.pl
 
 test: check
+
+# Create separate targets for generating mbed-os tests.
+MBED_APPS := $(addprefix mbed_,$(APPS))
+
+# Each test suite name is stripped off of prefix test_suite_. mbed-os test dir
+# structure requires format TESTS/<testgroup>[/<sub testgroups..>]/<test case>
+# Test app names are split on "." and end part is used as the test dir name.
+# Prevous parts are used as the test group dirs. For tests without "." same
+# name is used as the test group dir.
+
+$(MBED_APPS): mbed_%: %.c
+	@appdir=`echo $@|sed -e s/mbed_test_suite_//`; \
+	dot="\.";slash="\/"; \
+	appdir=`echo $$appdir|sed -e s/$$dot/$$slash/`; \
+	if [ "$${appdir#*/}" = "$$appdir" ]; then \
+		appdir=$$appdir/$$appdir; \
+	fi; \
+	mkdir -p ./TESTS/$$appdir; \
+	mv $< ./TESTS/$$appdir/main.c; \
+
+gen-mbed-test: $(MBED_APPS)
+
