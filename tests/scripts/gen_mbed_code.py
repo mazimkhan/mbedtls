@@ -23,6 +23,20 @@ def find_regex(rg, str, after):
     return -1
 
 
+def gen_deps(deps):
+    """
+    Generates depedency i.e. if def and endif code
+    :param deps:
+    :return:
+    """
+    dep_start = ''
+    dep_end = ''
+    for dep in deps:
+        dep_start += '#if defined %s\n' % dep
+        dep_end += '#endif /* %s */\n' % dep
+    return dep_start, dep_end
+
+
 def parse_function_signature(func):
     """
     Parses function signature and gives return type, function name, argument list.
@@ -73,10 +87,8 @@ def gen_function(name, deps, args, body):
     :param body:
     :return:
     """
-    code = ''
     # Put deps hash defs
-    for dep in deps:
-        code += '#if defined %s\n' % dep
+    code, dep_end = gen_deps(deps)
 
     # Put the body first
     code += body
@@ -105,10 +117,27 @@ void {name}_wrapper(){{
         arg_idx += 1
     code += wrapper.format(name=name, variable_decl=variable_decl, fetch_args_code=fetch_args_code, args=', '.join(params))
     # Put deps endif s
-    for dep in reversed(deps):
-        code += '#endif /* %s */\n' % dep
+    code += dep_end
 
     return code
+
+
+def gen_dispatch(name, deps):
+    """
+    Generates dispatch condition for the functions.
+
+    :param name:
+    :param deps:
+    :return:
+    """
+    dispatch_code, dep_end = gen_deps(deps)
+
+    dispatch_code += '''
+if (strcmp(func_name, "{name}") == 0){{
+    {name}_wrapper();
+}} else
+'''.format(name=name) + dep_end
+    return dispatch_code
 
 
 def get_functions(funcs_f, data_f):
@@ -132,11 +161,9 @@ def get_functions(funcs_f, data_f):
         body = cursor[offset + begin:offset + end]
         name, deps, args = parse_function_signature(body.strip())
         functions_code += gen_function(name, deps, args, body)
-        dispatch_code += '''
-if (strcmp(func_name == {name}) == 0){{
-    {name}_wrapper();
-}}
-'''.format(name=name)
+        dispatch_code += gen_dispatch(name, deps)
+
+        # Find next function
         offset += end
         begin = find_regex(BEGIN_CASE_REGEX, cursor[offset:], False)
         end = find_regex(END_CASE_REGEX, cursor[offset:], True)

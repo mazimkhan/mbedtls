@@ -51,9 +51,12 @@
 /*----------------------------------------------------------------------------*/
 /* Test dispatch code */
 
-void dispatch_test(int cnt, char *params[50])
+void dispatch_test(char * func_name)
 {{
 {dispatch_code} 
+{{
+    greentea_send_kv_c("error", "Test not found!");
+}}
 }}
 
 
@@ -73,9 +76,7 @@ int main(int argc, const char *argv[])
 
     while (1) {{
         if (greentea_parse_kv(key, val, sizeof(key), sizeof(val)) == 0) {{
-            greentea_send_kv("error", "Key Value parsing error!");
-        }} else {{
-            greentea_send_kv("error", "Key Value parsing error!");
+            dispatch_test(val);
         }}
     }}
 }}
