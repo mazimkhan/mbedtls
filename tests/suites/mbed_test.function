@@ -16,8 +16,7 @@
  *  This file is part of mbed TLS (https://tls.mbed.org)
  */
 
-#include "mbed.h"
-#include "greentea-client/test_env.h"
+#include "greentea-client/test_env_c.h"
 
 #if !defined(MBEDTLS_CONFIG_FILE)
 #include <mbedtls/config.h>
@@ -26,11 +25,91 @@
 #endif
 
 
+{function_headers}
+
+
 /*----------------------------------------------------------------------------*/
 /* Common helper code */
 
 {test_common_helpers}
 
+
+/*----------------------------------------------------------------------------*/
+/* Parameter parsing code */
+
+typedef struct {{
+    unsigned char * data;
+    char type;
+}} Param_t;
+
+void free_params(Param_t *params){{
+    Param_t * p = params;
+    while(p->data){{
+        free(p->data);
+    }}
+    free(params);
+}}
+
+Param_t * serial_parse_arguments() {{
+    int ret, num_args, int_val;
+    char key[2];
+    char val[10], num[10];
+    Param_t * params = NULL;
+
+    // Get no. of arguments
+    greentea_send_kv_c("send_count", " ");
+    ret = greentea_parse_kv_c(key, val, sizeof(key), sizeof(val));
+    if (ret == 0) {{
+        // received eof while receiving data
+        // failed to parse arguments
+        return NULL;
+    }}
+    // Covert number of param string to int
+    int_val = atoi(val);
+    num_args = atoi(val);
+
+    // allocate params array based on num arguments
+    params = (Param_t *)malloc(sizeof(Param_t) * (num_args + 1));
+    memset(params, 0, sizeof(Param_t) * (num_args + 1));
+
+    for (int i = 0; i < num_args; i++){{
+        snprintf(num, sizeof(num), "%d", i);
+        printf ("Requesting param %s\r\n", num);
+        greentea_send_kv_c("send_param", num);
+        ret = greentea_parse_kv_c(key, val, sizeof(key), sizeof(val));
+        if (ret == 0) {{
+            free_params(params);
+            return NULL;
+        }}
+
+        params[i].type = key[0];
+        int_val = atoi(val);
+        printf ("Got argument type %s of len %d\r\n", key, int_val);
+
+        switch(key[0]){{
+            case 'I': {{
+                          // convert val into integer and store in the array
+                          params[i].data = (unsigned char *)malloc(sizeof(int));
+                          *((int *)params[i].data) = int_val;
+                      }}
+                      break;
+            case 'S':
+            case 'H': {{
+                          // receive hex/string
+                          params[i].data = (unsigned char *)malloc(int_val + 1);
+                          greentea_send_kv_c("send_data", num);
+                          ret = greentea_parse_kv_c(key, (char *)params[i].data, sizeof(key), int_val + 1);
+                      }}
+                      break;
+            default: {{
+                         // Wrong type received
+                         free_params(params);
+                         return NULL;
+                     }}
+        }}
+    }}
+    return params;
+}}
 
 /*----------------------------------------------------------------------------*/
 /* Test Suite Code */
@@ -45,13 +124,24 @@
 
 {functions_code}
 
-#line !LINE_NO! "main_test.function"
+//#line !LINE_NO! "main_test.function"
 
 
 /*----------------------------------------------------------------------------*/
 /* Test dispatch code */
 
-void dispatch_test(char * func_name)
+int dep_check( char *str )
+{{
+    if( str == NULL )
+        return( 1 );
+
+{dep_check_code}
+//#line !LINE_NO! "main_test.function"
+
+    return( DEPENDENCY_NOT_SUPPORTED );
+}}
+
+void dispatch_test(char * func_name, Param_t * params)
 {{
 {dispatch_code} 
 {{
@@ -59,24 +149,31 @@ void dispatch_test(char * func_name)
 }}
 }}
 
-
-
-
 /*----------------------------------------------------------------------------*/
 /* Main Test code */
 
 
-int main(int argc, const char *argv[])
-{{
-    char key[5];
+int main(int argc, const char *argv[]) {{
+    char key[50];
     char val[100];
 
     // Start by send "start" to ht
-    GREENTEA_SETUP(120, "mbedtls_test");
+    GREENTEA_SETUP_C(120, "mbedtls_test");
 
     while (1) {{
-        if (greentea_parse_kv(key, val, sizeof(key), sizeof(val)) == 0) {{
-            dispatch_test(val);
+        printf("Waiting for key 'call' sizeof(key) %d sizeof(val) %d\r\n", sizeof(key), sizeof(val));
+        fflush(stdout);
+        greentea_send_kv_c("start_test", " ");
+        if (greentea_parse_kv_c(key, val, sizeof(key), sizeof(val))) {{
+            Param_t * params = serial_parse_arguments();
+            if (params == NULL){{
+                greentea_send_kv_c("error", "Failed to parse!");
+            }} else {{
+                printf ("\r\nChecking function %s\r\n", val);
+                fflush(stdout);
+                dispatch_test(val, params);
+                free_params(params);
+            }}
         }}
     }}
 }}

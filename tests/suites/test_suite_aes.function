@@ -293,5 +293,7 @@ exit:
 void aes_selftest()
 {
     TEST_ASSERT( mbedtls_aes_self_test( 1 ) == 0 );
+exit:
+    ;;
 }
 /* END_CASE */

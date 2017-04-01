@@ -1,7 +1,36 @@
+
+
 import os
 import re
 import argparse
+import shutil
 
+from mbedtls_test import TestDataParser
+
+
+"""
+Generates code in following structure.
+
+<output dir>/
+|-- host_tests/
+|   |-- mbedtls_test.py
+|   |-- suites/
+|   |   |-- *.data files
+|   |-- mbedtls/
+|   |   |-- <test suite #1>/
+|   |   |    |-- main.c
+|   |   ...
+|   |   |-- <test suite #n>/
+|   |   |    |-- main.c
+|   |   |
+"""
+
+
+BEGIN_HEADER_REGEX = '/\*\s*BEGIN_HEADER\s*\*/'
+END_HEADER_REGEX = '/\*\s*END_HEADER\s*\*/'
+
+BEGIN_DEP_REGEX = 'BEGIN_DEPENDENCIES'
+END_DEP_REGEX = 'END_DEPENDENCIES'
 
 BEGIN_CASE_REGEX = '/\*\s*BEGIN_CASE\s*(.*)\s*\*/'
 END_CASE_REGEX = '/\*\s*END_CASE\s*\*/'
@@ -45,7 +74,6 @@ def parse_function_signature(func):
     :return:
     """
     deps = []
-    #print "[%s]" % func
     m = re.search(BEGIN_CASE_REGEX, func)
     begin_case_skip_len = len(m.group(0))
     if len(m.group(1)):
@@ -62,7 +90,6 @@ def parse_function_signature(func):
     args_list = func[:func.find(')')].split(',')
     args = []
 
-    print name
     for arg in args_list:
         arg = arg.strip()
         if arg == '':
@@ -94,28 +121,25 @@ def gen_function(name, deps, args, body):
     code += body
     # Then create the wrapper
     wrapper = '''
-void {name}_wrapper(){{
-    char key[5];
-    char int_str[12];
+void {name}_wrapper(Param_t * params){{
     {variable_decl}
-    {fetch_args_code}
+    {int_conversions}
     {name}({args});
 }}
 '''
     variable_decl = ''
-    fetch_args_code = ''
+    int_conv = ''
     params = []
     arg_idx = 0
     for var in args:
         if var == 'int':
             variable_decl += '%s p%d;\n' % (var, arg_idx)
-            fetch_args_code += 'greentea_parse_kv_c(key, int_str, 5, sizeof(int_str));\n'
+            int_conv += "p%d = *((int *)params[%d].data);\n" % (arg_idx, arg_idx)
+            params.append('p%d' % arg_idx)
         elif var == 'char*':
-            variable_decl += 'char p%d[100];\n' % arg_idx
-            fetch_args_code += 'greentea_parse_kv_c(key, p%d, 5, sizeof(p%d));\n' % (arg_idx, arg_idx)
-        params.append('p%d' % arg_idx)
+            params.append('(%s)params[%d].data' % (var, arg_idx))
         arg_idx += 1
-    code += wrapper.format(name=name, variable_decl=variable_decl, fetch_args_code=fetch_args_code, args=', '.join(params))
+    code += wrapper.format(name=name, variable_decl=variable_decl, int_conversions=int_conv, args=', '.join(params))
     # Put deps endif s
     code += dep_end
 
@@ -134,23 +158,49 @@ def gen_dispatch(name, deps):
 
     dispatch_code += '''
 if (strcmp(func_name, "{name}") == 0){{
-    {name}_wrapper();
+    {name}_wrapper(params);
 }} else
 '''.format(name=name) + dep_end
     return dispatch_code
 
 
-def get_functions(funcs_f, data_f):
+def get_func_headers(funcs_data):
+    """
+
+    :param funcs_data:
+    :return:
+    """
+    begin = find_regex(BEGIN_HEADER_REGEX, funcs_data, False)
+    end = find_regex(END_HEADER_REGEX, funcs_data, True)
+    return funcs_data[begin:end]
+
+
+def get_func_deps(funcs_data):
+    """
+    returns the macros require for the code in functions file.
+
+    :param funcs_data:
+    :return:
+    """
+    begin = find_regex(BEGIN_DEP_REGEX, funcs_data, False)
+    end = find_regex(END_DEP_REGEX, funcs_data, True)
+    deps = []
+    for line in funcs_data[begin:end].splitlines():
+        m = re.search('depends_on\:(.*)', line.strip())
+        if m:
+            deps += [x.strip() for x in m.group(1).split(':')]
+    return deps
+
+
+def get_functions(funcs_data, func_deps):
     """
     Get functions file
 
-    :param funcs_f:
-    :param data_f:
+    :param funcs_data:
     :return:
     """
     # Read functions
-    funcs = funcs_f.read()
-    cursor = funcs
+    cursor = funcs_data
     functions_code = ''
     dispatch_code = ''
 
@@ -168,14 +218,42 @@ def get_functions(funcs_f, data_f):
         begin = find_regex(BEGIN_CASE_REGEX, cursor[offset:], False)
         end = find_regex(END_CASE_REGEX, cursor[offset:], True)
 
-    # get function code
-    # Get argument
-    # generate dispatch code
+    ifdef, endif = gen_deps(func_deps)
+    functions_code = ifdef + functions_code + endif
+    dispatch_code = ifdef + dispatch_code + endif
+    # TBDs
     # find hex arguments
     # remove hexify code
     # create wrapper code
 
-    return {'functions_code':functions_code, 'dispatch_code':dispatch_code}
+    return {'functions_code': functions_code, 'dispatch_code': dispatch_code}
+
+
+def gen_dependency_checks(data_file):
+    """
+    Generate dependency check code for test dependencies
+
+    :param data_file:
+    :return:
+    """
+    parser = TestDataParser()
+    parser.parse(data_file)
+    test_deps = parser.get_all_deps()
+    test_deps.sort()
+
+    dep_check_block = '''
+    if (strcmp(str, "{dep_id}") == 0) {{
+#ifdef ({macro})
+        return DEPENDENCY_SUPPORTED;
+#else
+        return DEPENDENCY_NOT_SUPPORTED;
+#endif
+    }} else
+'''
+    checks = ''
+    for dep in test_deps:
+        checks += dep_check_block.format(macro=dep, dep_id=test_deps.index(dep))
+    return checks
 
 
 def gen_mbed_code(funcs_file, data_file, template_file, help_file, suites_dir, c_file):
@@ -183,7 +261,7 @@ def gen_mbed_code(funcs_file, data_file, template_file, help_file, suites_dir, c
     Generate mbed-os test code.
 
     :param funcs_file:
-    :param data_file:
+    :param dat  a_file:
     :param template_file:
     :param help_file:
     :param suites_dir:
@@ -207,8 +285,12 @@ def gen_mbed_code(funcs_file, data_file, template_file, help_file, suites_dir, c
         snippets['test_common_helpers']= help_code
 
     # Function code
-    with open(funcs_file, 'r') as funcs_f, open(data_file, 'r') as data_f:
-        function_attrs = get_functions(funcs_f, data_f)
+    with open(funcs_file, 'r') as funcs_f:
+        funcs_data = funcs_f.read()
+        snippets['function_headers'] = get_func_headers(funcs_data)
+        deps = get_func_deps(funcs_data)
+        function_attrs = get_functions(funcs_data, deps)
+        snippets['dep_check_code'] = gen_dependency_checks(data_file)
         snippets.update(function_attrs)
 
     snippets['test_file'] = c_file
@@ -221,6 +303,9 @@ def gen_mbed_code(funcs_file, data_file, template_file, help_file, suites_dir, c
     with open(template_file, 'r') as template_f:
         template = template_f.read()
         code = template.format(**snippets)
+        c_file_dir = os.path.dirname(c_file)
+        if not os.path.exists(c_file_dir):
+            os.makedirs(c_file_dir)
         with open(c_file, 'w') as c_f:
             c_f.write(code)
 
@@ -233,7 +318,7 @@ def check_cmd():
 
     :return:
     """
-    parser = argparse.ArgumentParser(description="Generate code for mbed-os tests.")
+    parser = argparse.ArgumentParser(description='Generate code for mbed-os tests.')
 
     parser.add_argument("-f", "--functions-file",
                         dest="funcs_file",
@@ -265,15 +350,18 @@ def check_cmd():
                         metavar="HELPER",
                         required=True)
 
-    parser.add_argument("-c", "--c-file",
-                        dest="c_file",
-                        help="Output C file",
-                        metavar="C_FILE",
+    parser.add_argument("-o", "--out-dir",
+                        dest="out_dir",
+                        help="Dir where generated code and scripts are copied",
+                        metavar="OUT_DIR",
                         required=True)
 
     args = parser.parse_args()
 
-    gen_mbed_code(args.funcs_file, args.data_file, args.template_file, args.help_file, args.suites_dir, args.c_file)
+    # FIXME since we are working out some paths. better revisit command line arguments
+    data_name = os.path.splitext(os.path.basename(args.data_file))[0]
+    c_file = os.path.join(args.out_dir, 'mbedtls', data_name, 'main.c')
+    gen_mbed_code(args.funcs_file, args.data_file, args.template_file, args.help_file, args.suites_dir, c_file)
 
 
 if __name__ == "__main__":
