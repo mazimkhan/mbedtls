@@ -46,6 +46,7 @@ void free_params(Param_t *params){{
     Param_t * p = params;
     while(p->data){{
         free(p->data);
+        p++;
     }}
     free(params);
 }}
@@ -95,10 +96,12 @@ Param_t * serial_parse_arguments() {{
                       break;
             case 'S':
             case 'H': {{
-                          // receive hex/string
-                          params[i].data = (unsigned char *)malloc(int_val + 1);
-                          greentea_send_kv_c("send_data", num);
-                          ret = greentea_parse_kv_c(key, (char *)params[i].data, sizeof(key), int_val + 1);
+                          if (int_val > 0){{
+                              // receive hex/string
+                              params[i].data = (unsigned char *)malloc(int_val + 1);
+                              greentea_send_kv_c("send_data", num);
+                              ret = greentea_parse_kv_c(key, (char *)params[i].data, sizeof(key), int_val + 1);
+                          }}
                       }}
                       break;
             default: {{
@@ -130,22 +133,24 @@ Param_t * serial_parse_arguments() {{
 /*----------------------------------------------------------------------------*/
 /* Test dispatch code */
 
-int dep_check( char *str )
+int dep_check( int dep_id )
 {{
-    if( str == NULL )
-        return( 1 );
-
 {dep_check_code}
-//#line !LINE_NO! "main_test.function"
 
-    return( DEPENDENCY_NOT_SUPPORTED );
+//#line !LINE_NO! "main_test.function"
+    {{
+         printf ("DEPENDENCY_NOT_SUPPORTED!\r\n");
+         return( DEPENDENCY_NOT_SUPPORTED );
+    }}
 }}
 
 void dispatch_test(char * func_name, Param_t * params)
 {{
 {dispatch_code} 
+//#line !LINE_NO! "main_test.function"
 {{
-    greentea_send_kv_c("error", "Test not found!");
+    printf("Test function '%s' not found\r\n", func_name);
+    test_errors++;
 }}
 }}
 
@@ -157,23 +162,39 @@ int main(int argc, const char *argv[]) {{
     char key[50];
     char val[100];
 
-    // Start by send "start" to ht
     GREENTEA_SETUP_C(120, "mbedtls_test");
 
     while (1) {{
-        printf("Waiting for key 'call' sizeof(key) %d sizeof(val) %d\r\n", sizeof(key), sizeof(val));
         fflush(stdout);
+        test_errors = 0;
         greentea_send_kv_c("start_test", " ");
         if (greentea_parse_kv_c(key, val, sizeof(key), sizeof(val))) {{
-            Param_t * params = serial_parse_arguments();
-            if (params == NULL){{
-                greentea_send_kv_c("error", "Failed to parse!");
+            if (strcmp(key, "check_dep") == 0) {{
+                int dep_id;
+                dep_id = atoi(val);
+                if (dep_check(dep_id) == DEPENDENCY_SUPPORTED) {{
+                    greentea_send_kv_c("check_dep", "1");
+                }} else {{
+                    greentea_send_kv_c("check_dep", "0");
+                }}
+            }} else if (strcmp(key, "call") == 0) {{
+                Param_t * params = serial_parse_arguments();
+                if (params == NULL){{
+                    printf ("Failed to parse parameters!\r\n"); // TBD align printf API
+                    test_errors++;
+                }} else {{
+                    printf ("\r\nChecking function %s\r\n", val);
+                    fflush(stdout);
+                    dispatch_test(val, params);
+                    free_params(params);
+                }}
+                greentea_send_kv_c("result", (test_errors)?"0":"1");
             }} else {{
-                printf ("\r\nChecking function %s\r\n", val);
-                fflush(stdout);
-                dispatch_test(val, params);
-                free_params(params);
+                printf ("Unexpected K,V pair: %s;%s\r\n", key, val);
             }}
+        }} else {{
+            greentea_send_kv_c("result", "0");
+            continue;
         }}
     }}
 }}
