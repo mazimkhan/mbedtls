@@ -32,7 +32,7 @@ END_HEADER_REGEX = '/\*\s*END_HEADER\s*\*/'
 BEGIN_DEP_REGEX = 'BEGIN_DEPENDENCIES'
 END_DEP_REGEX = 'END_DEPENDENCIES'
 
-BEGIN_CASE_REGEX = '/\*\s*BEGIN_CASE\s*(.*)\s*\*/'
+BEGIN_CASE_REGEX = '/\*\s*BEGIN_CASE\s*(.*?)\s*\*/'
 END_CASE_REGEX = '/\*\s*END_CASE\s*\*/'
 
 
@@ -62,7 +62,7 @@ def gen_deps(deps):
     dep_end = ''
     for dep in deps:
         dep_start += '#if defined %s\n' % dep
-        dep_end += '#endif /* %s */\n' % dep
+        dep_end = '#endif /* %s */\n' % dep + dep_end
     return dep_start, dep_end
 
 
@@ -78,9 +78,9 @@ def parse_function_signature(func):
     begin_case_skip_len = len(m.group(0))
     if len(m.group(1)):
         for x in m.group(1).split():
-            m = re.match('depends_on:(\w+)',x, re.I)
+            m = re.match('depends_on:(.*)',x, re.I)
             if m:
-                deps.append(m.group(1))
+                deps += m.group(1).split(':')
     func = func[begin_case_skip_len:].strip()
     m = re.match('void\s+(\w+)\s*\(', func, re.I)
     if not m:
@@ -117,14 +117,17 @@ def gen_function(name, deps, args, body):
     # Put deps hash defs
     code, dep_end = gen_deps(deps)
 
+    # Add prefix to function name
+    body = body.replace(name, 'test_%s' % name, 1)
+
     # Put the body first
     code += body
     # Then create the wrapper
     wrapper = '''
-void {name}_wrapper(Param_t * params){{
+void test_{name}_wrapper(Param_t * params){{
     {variable_decl}
     {int_conversions}
-    {name}({args});
+    test_{name}({args});
 }}
 '''
     variable_decl = ''
@@ -158,7 +161,7 @@ def gen_dispatch(name, deps):
 
     dispatch_code += '''
 if (strcmp(func_name, "{name}") == 0){{
-    {name}_wrapper(params);
+    test_{name}_wrapper(params);
 }} else
 '''.format(name=name) + dep_end
     return dispatch_code
@@ -242,8 +245,8 @@ def gen_dependency_checks(data_file):
     test_deps.sort()
 
     dep_check_block = '''
-    if (strcmp(str, "{dep_id}") == 0) {{
-#ifdef ({macro})
+    if (dep_id == {dep_id}) {{
+#if defined ({macro})
         return DEPENDENCY_SUPPORTED;
 #else
         return DEPENDENCY_NOT_SUPPORTED;
@@ -251,8 +254,8 @@ def gen_dependency_checks(data_file):
     }} else
 '''
     checks = ''
-    for dep in test_deps:
-        checks += dep_check_block.format(macro=dep, dep_id=test_deps.index(dep))
+    for dep in set(test_deps):
+        checks += dep_check_block.format(macro=dep, dep_id=(test_deps.index(dep) + 1))
     return checks
 
 
