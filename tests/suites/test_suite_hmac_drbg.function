@@ -315,5 +315,8 @@ exit:
 void hmac_drbg_selftest( )
 {
     TEST_ASSERT( mbedtls_hmac_drbg_self_test( 1 ) == 0 );
+
+exit:
+    ;;
 }
 /* END_CASE */
