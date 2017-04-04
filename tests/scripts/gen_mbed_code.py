@@ -61,7 +61,12 @@ def gen_deps(deps):
     dep_start = ''
     dep_end = ''
     for dep in deps:
-        dep_start += '#if defined %s\n' % dep
+        if dep[0] == '!':
+            noT = '!'
+            dep = dep[1:]
+        else:
+            noT = ''
+        dep_start += '#if %sdefined %s\n' % (noT, dep)
         dep_end = '#endif /* %s */\n' % dep + dep_end
     return dep_start, dep_end
 
@@ -246,7 +251,7 @@ def gen_dependency_checks(data_file):
 
     dep_check_block = '''
     if (dep_id == {dep_id}) {{
-#if defined ({macro})
+#if {noT}defined ({macro})
         return DEPENDENCY_SUPPORTED;
 #else
         return DEPENDENCY_NOT_SUPPORTED;
@@ -255,7 +260,12 @@ def gen_dependency_checks(data_file):
 '''
     checks = ''
     for dep in set(test_deps):
-        checks += dep_check_block.format(macro=dep, dep_id=(test_deps.index(dep) + 1))
+        if dep[0] == '!':
+            noT = '!'
+            dep = dep[1:]
+        else:
+            noT = ''
+        checks += dep_check_block.format(noT=noT, macro=dep, dep_id=(test_deps.index(dep) + 1))
     return checks
 
 
