@@ -135,11 +135,15 @@ class MbedTlsTest(BaseHostTest):
         script_dir = os.path.split(os.path.abspath(__file__))[0]
         data_file = ".".join((os.path.splitext(os.path.basename(binary_path))[0], 'data'))
         data_file = os.path.join(script_dir, 'suites', data_file)
-        self.log("Running tests from %s" % data_file)
+        if os.path.exists(data_file):
+            self.log("Running tests from %s" % data_file)
 
-        parser = TestDataParser()
-        parser.parse(data_file)
-        self.tests = parser.get_test_data()
+            parser = TestDataParser()
+            parser.parse(data_file)
+            self.tests = parser.get_test_data()
+        else:
+            self.log("Data file not found: %s" % data_file)
+            self.notify_complete(False)
 
     def run_next_test(self):
         """
@@ -158,7 +162,7 @@ class MbedTlsTest(BaseHostTest):
             else:
                 self.send_kv("call", function)
         else:
-            self.notify_complete(result=True)
+            self.notify_complete(True)
 
     def get_test_name(self):
         """
