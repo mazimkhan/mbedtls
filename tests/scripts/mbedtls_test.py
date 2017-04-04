@@ -99,7 +99,7 @@ class TestDataParser(object):
             args = parts[1:]
             self.tests.append((name, function, deps, args))
             line = file.readline()
-            
+
     def get_test_data(self):
         """
         """
@@ -124,8 +124,9 @@ class MbedTlsTest(BaseHostTest):
         """
         """
         super(MbedTlsTest, self).__init__()
-        self.test_index = -1
         self.tests = []
+        self.test_index = -1
+        self.dep_index = 0
 
     def setup(self):
         """
@@ -146,11 +147,18 @@ class MbedTlsTest(BaseHostTest):
 
         """
         self.test_index += 1
+        self.dep_index = 0
         if self.test_index < len(self.tests):
             name, function, deps, args = self.tests[self.test_index]
-            self.send_kv("call", function)
+            self.log('{{__testcase_start;%s}}' % name)
+            if len(deps):
+                dep = deps[self.dep_index]
+                self.send_kv('check_dep', str(dep))
+                self.dep_index += 1
+            else:
+                self.send_kv("call", function)
         else:
-            self.notify_complete(True)
+            self.notify_complete(result=True)
 
     def get_test_name(self):
         """
@@ -170,9 +178,30 @@ class MbedTlsTest(BaseHostTest):
             return name
         return None
 
+    def get_result(self, value):
+        try:
+            return int(value)
+        except ValueError:
+            self.log("ValueError for received value in 'check_dep' k,v. Should be integer.")
+        return 0
+
     @event_callback('start_test')
     def on_start_test(self, key, value, timestamp):
         self.run_next_test()
+
+    @event_callback('check_dep')
+    def on_dep_check(self, key, value, timestamp):
+        int_val = self.get_result(value)
+        name, function, deps, args = self.tests[self.test_index]
+        if value == 1:
+            if self.dep_index < len(deps):
+                dep = deps[self.dep_index]
+                self.send_kv('check_dep', str(dep))
+                self.dep_index += 1
+            else:
+                self.send_kv("call", function)
+        else:
+            self.log('{{__testcase_finish;%s;%d;%d}}' % (name, int_val, not int_val))
 
     @event_callback('send_count')
     def on_send_count(self, key, value, timestamp):
@@ -187,7 +216,7 @@ class MbedTlsTest(BaseHostTest):
         if re.match('^\d+$', arg):
             self.send_kv("I", arg)
         else:
-            self.send_kv("S", str(len(arg)))
+            self.send_kv("S", str(len(arg.strip('"'))))
 
     @event_callback('send_data')
     def on_send_data(self, key, value, timestamp):
@@ -196,19 +225,13 @@ class MbedTlsTest(BaseHostTest):
         arg = args[i]
         self.send_kv('D', arg.strip('"'))
 
-    @event_callback("error")
-    def on_error(self, key, value, timestamp):
-        """
-        On error.
-
-        """
-        pass
-
     @event_callback("result")
     def on_result(self, key, value, timestamp):
         """
         Handle result.
 
         """
-        pass
+        int_val = self.get_result(value)
+        name, function, deps, args = self.tests[self.test_index]
+        self.log('{{__testcase_finish;%s;%d;%d}}' % (name, int_val, not int_val))
 
