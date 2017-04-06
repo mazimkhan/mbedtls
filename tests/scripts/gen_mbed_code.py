@@ -125,6 +125,16 @@ def gen_function(name, deps, args, body):
     # Add prefix to function name
     body = body.replace(name, 'test_%s' % name, 1)
 
+    # Add exit label if not present
+    if body.find('exit:') == -1:
+        s = body.rsplit('}', 1)
+        if len(s) == 2:
+            body = """
+exit:
+    ;;
+}
+""".join(s)
+
     # Put the body first
     code += body
     # Then create the wrapper
