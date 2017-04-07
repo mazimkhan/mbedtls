@@ -71,6 +71,23 @@ def gen_deps(deps):
     return dep_start, dep_end
 
 
+def gen_deps_one_line(deps):
+    """
+
+    :param deps:
+    :return:
+    """
+    defines = []
+    for dep in deps:
+        if dep[0] == '!':
+            noT = '!'
+            dep = dep[1:]
+        else:
+            noT = ''
+        defines.append('%sdefined (%s)' % (noT, dep))
+    return '#if ' + ' && '.join(defines)
+
+
 def parse_function_signature(func):
     """
     Parses function signature and gives return type, function name, argument list.
@@ -136,7 +153,7 @@ exit:
 """.join(s)
 
     # Put the body first
-    code += body
+    code += body + '\n'
     # Then create the wrapper
     wrapper = '''
 void test_{name}_wrapper(Param_t * params){{
@@ -157,7 +174,7 @@ void test_{name}_wrapper(Param_t * params){{
         elif var == 'char*':
             params.append('(%s)params[%d].data' % (var, arg_idx))
         arg_idx += 1
-    code += wrapper.format(name=name, variable_decl=variable_decl, int_conversions=int_conv, args=', '.join(params))
+    #code += wrapper.format(name=name, variable_decl=variable_decl, int_conversions=int_conv, args=', '.join(params))
     # Put deps endif s
     code += dep_end
 
@@ -210,17 +227,127 @@ def get_func_deps(funcs_data):
     return deps
 
 
-def get_functions(funcs_data, func_deps):
+def generate_wrapper(function, wrapper_name, types, deps, test_data):
+    """
+    Generate test function wrappers using function signature and test data.
+
+    :param function:
+    :param wrapper_name:
+    :param types:
+    :param deps:
+    :param test_data:
+    :return:
+    """
+    wrapper = '''
+void {wrapper_name} (){{
+{deps_start}
+    {variable_decl}
+    {fetch_code}
+    test_{function}({params});
+    {cleanup}
+{deps_end}
+}}
+'''
+    if len(deps) > 0:
+        deps_code = gen_deps_one_line(deps)
+        deps_end = '''
+#else
+    printf("Test function not supported!");
+    test_errors++;
+#endif
+'''
+    else:
+        deps_code = ''
+        deps_end = ''
+    variable_decl = ''
+    fetch_code = ''
+    params = []
+    cleanup = ''
+    for arg_idx in range(len(test_data)):
+        typ = types[arg_idx]
+        val = test_data[arg_idx]
+        if typ == 'int':
+            if re.match('\d+', val):
+                variable_decl += 'int p%d;\n' % arg_idx
+                fetch_code += 'p%d = serial_get_int(%d);\n' % (arg_idx, arg_idx)
+                params.append('p%d' % arg_idx)
+            else:
+                params.append(val)
+        elif typ == 'char*':
+            variable_decl += 'char * p%d;\n' % arg_idx
+            fetch_code += 'p%d = serial_alloc_get_string(%d);\n' % (arg_idx, arg_idx)
+            params.append('p%d' % arg_idx)
+            cleanup += 'free(p%d);\n' % arg_idx
+        fetch_code += 'if (test_errors) return;\n'
+    return wrapper.format(function=function, deps_start=deps_code, deps_end=deps_end, wrapper_name=wrapper_name,
+                          variable_decl=variable_decl, fetch_code=fetch_code, params=', '.join(params),
+                          cleanup=cleanup)
+
+
+def gen_dispatch2(data_file, functions):
+    """
+
+    :param data_file:
+    :param functions:
+    :return:
+    """
+    parser = TestDataParser()
+    parser.parse(data_file)
+    tests = parser.get_test_data()
+
+    wrappers = {} # Key: 'unique_id': {'name': <wrapper name>}
+    wrapper_code = ''
+    dispatch_code = ''
+
+    for test_idx in range(len(tests)):
+        test_name, test_func, test_deps, test_data = tests[test_idx]
+        func_arg_types, func_deps = functions[test_func]
+        assert len(func_arg_types) == len(test_data), "Test data and function argument count mismatch!"
+
+        # inspect args if there are any int constants
+        unique_wrapper_id = 'test_' + test_func + '_wrapper'
+        has_int_macros = False
+        for arg_idx in range(len(test_data)):
+            typ = func_arg_types[arg_idx]
+            val = test_data[arg_idx]
+            if typ == 'int' and not re.match('\d+', val):
+                unique_wrapper_id += '_' + '%s' % val
+                has_int_macros = True
+
+        if unique_wrapper_id in wrappers:
+            wrapper_name = wrappers[unique_wrapper_id]['name']
+        else:
+            # generate wrapper function
+            wrapper_name = 'test_' + test_func + '_wrapper'
+            wrapper_name += '_%d' % test_idx if has_int_macros else ''
+            wrapper_code += generate_wrapper(test_func, wrapper_name, func_arg_types, func_deps, test_data)
+            wrappers[unique_wrapper_id] = {'name': wrapper_name}
+
+        if len(test_deps) > 0:
+            deps_code = gen_deps_one_line(test_deps)
+            dispatch_code += deps_code + '\n'
+        dispatch_code += wrapper_name + ',\n'
+        if len(test_deps) > 0:
+            dispatch_code += '#else\n'
+            dispatch_code += 'test_dependency_not_supported,\n'
+            dispatch_code += '#endif\n'
+    return wrapper_code, dispatch_code, len(tests)
+
+
+def get_functions(funcs_data, func_deps, data_file):
     """
     Get functions file
 
     :param funcs_data:
+    :param func_deps:
+    :param data_file:
     :return:
     """
     # Read functions
     cursor = funcs_data
     functions_code = ''
     dispatch_code = ''
+    func_args = {}
 
     begin = find_regex(BEGIN_CASE_REGEX, cursor, False)
     end = find_regex(END_CASE_REGEX, cursor, True)
@@ -228,23 +355,29 @@ def get_functions(funcs_data, func_deps):
     while -1 not in (begin, end):
         body = cursor[offset + begin:offset + end]
         name, deps, args = parse_function_signature(body.strip())
+        func_args[name] = (args, deps + func_deps)
         functions_code += gen_function(name, deps, args, body)
-        dispatch_code += gen_dispatch(name, deps)
+        # Can we append special wrappers here
+        # We need info of special wrappers here
+        # But special wrappers need function info before
+        #
+        #dispatch_code += gen_dispatch(name, deps)
 
         # Find next function
         offset += end
         begin = find_regex(BEGIN_CASE_REGEX, cursor[offset:], False)
         end = find_regex(END_CASE_REGEX, cursor[offset:], True)
 
-    ifdef, endif = gen_deps(func_deps)
-    functions_code = ifdef + functions_code + endif
-    dispatch_code = ifdef + dispatch_code + endif
-    # TBDs
-    # find hex arguments
-    # remove hexify code
-    # create wrapper code
+    # Do dispatch here based on the test data
 
-    return {'functions_code': functions_code, 'dispatch_code': dispatch_code}
+    ifdef, endif = gen_deps(func_deps)
+    # create wrapper code for tests that require macro substitution
+    # Create function table
+    functions_code = ifdef + functions_code + endif
+    wrappers_code, dispatch_code, test_count = gen_dispatch2(data_file, func_args)
+
+    return {'functions_code': functions_code, 'dispatch_code': dispatch_code,
+            'dispatch_wrappers': wrappers_code, 'test_count': test_count}
 
 
 def gen_dependency_checks(data_file):
@@ -312,7 +445,7 @@ def gen_mbed_code(funcs_file, data_file, template_file, help_file, suites_dir, c
         funcs_data = funcs_f.read()
         snippets['function_headers'] = get_func_headers(funcs_data)
         deps = get_func_deps(funcs_data)
-        function_attrs = get_functions(funcs_data, deps)
+        function_attrs = get_functions(funcs_data, deps, data_file)
         snippets['dep_check_code'] = gen_dependency_checks(data_file)
         snippets.update(function_attrs)
 
