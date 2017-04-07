@@ -17,7 +17,6 @@ limitations under the License.
 
 import re
 import os
-import time
 from mbed_host_tests import BaseHostTest, event_callback
 
 
@@ -126,7 +125,7 @@ class MbedTlsTest(BaseHostTest):
         super(MbedTlsTest, self).__init__()
         self.tests = []
         self.test_index = -1
-        self.dep_index = 0
+        #self.dep_index = 0
 
     def setup(self):
         """
@@ -151,16 +150,11 @@ class MbedTlsTest(BaseHostTest):
 
         """
         self.test_index += 1
-        self.dep_index = 0
+        #self.dep_index = 0
         if self.test_index < len(self.tests):
             name, function, deps, args = self.tests[self.test_index]
             self.log('{{__testcase_start;%s}}' % name)
-            if len(deps):
-                dep = deps[self.dep_index]
-                self.send_kv('check_dep', str(dep))
-                self.dep_index += 1
-            else:
-                self.send_kv("call", function)
+            self.send_kv("call", str(self.test_index))
         else:
             self.notify_complete(True)
 
@@ -193,41 +187,61 @@ class MbedTlsTest(BaseHostTest):
     def on_start_test(self, key, value, timestamp):
         self.run_next_test()
 
-    @event_callback('check_dep')
-    def on_dep_check(self, key, value, timestamp):
-        int_val = self.get_result(value)
+    @event_callback('I')
+    def on_I(self, key, value, timestamp):
+        error = False
         name, function, deps, args = self.tests[self.test_index]
-        if value == 1:
-            if self.dep_index < len(deps):
-                dep = deps[self.dep_index]
-                self.send_kv('check_dep', str(dep))
-                self.dep_index += 1
+        try:
+            arg_idx = int(value)
+            if arg_idx < len(args):
+                data = args[arg_idx]
+                if re.match('\d+', data):
+                    self.send_kv(key, data)
+                else:
+                    self.log("Argument at index %d expected to be 'int'. Found %s" % (arg_idx, data))
+                    error = True
             else:
-                self.send_kv("call", function)
-        else:
-            self.log('{{__testcase_finish;%s;%d;%d}}' % (name, int_val, not int_val))
+                self.log("Invalid test data. Argument index %d does not exist in test data" % arg_idx)
+                error = True
+        except ValueError:
+            self.log("Invalid argument index %s" % value)
+            error = True
+        if error:
+            self.notify_complete(False)
 
-    @event_callback('send_count')
-    def on_send_count(self, key, value, timestamp):
+    @event_callback('S')
+    def on_S(self, key, value, timestamp):
+        error = False
         name, function, deps, args = self.tests[self.test_index]
-        self.send_kv("N", len(args))
+        try:
+            arg_idx = int(value)
+            if arg_idx < len(args):
+                self.send_kv(key, len(args[arg_idx].strip('"')))
+            else:
+                self.log("Invalid test data. Argument index %d does not exist in test data" % arg_idx)
+                error = True
+        except ValueError:
+            self.log("Invalid argument index %s" % value)
+            error = True
+        if error:
+            self.notify_complete(False)
 
-    @event_callback('send_param')
-    def on_send_param(self, key, value, timestamp):
-        i = int(value)
+    @event_callback('D')
+    def on_D(self, key, value, timestamp):
+        error = False
         name, function, deps, args = self.tests[self.test_index]
-        arg = args[i]
-        if re.match('^\d+$', arg):
-            self.send_kv("I", arg)
-        else:
-            self.send_kv("S", str(len(arg.strip('"'))))
-
-    @event_callback('send_data')
-    def on_send_data(self, key, value, timestamp):
-        i = int(value)
-        name, function, deps, args = self.tests[self.test_index]
-        arg = args[i]
-        self.send_kv('D', arg.strip('"'))
+        try:
+            arg_idx = int(value)
+            if arg_idx < len(args):
+                self.send_kv(key, args[arg_idx].strip('"'))
+            else:
+                self.log("Invalid test data. Argument index %d does not exist in test data" % arg_idx)
+                error = True
+        except ValueError:
+            self.log("Invalid argument index %s" % value)
+            error = True
+        if error:
+            self.notify_complete(False)
 
     @event_callback("result")
     def on_result(self, key, value, timestamp):
