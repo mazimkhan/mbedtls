@@ -277,7 +277,7 @@ void {wrapper_name} (){{
             variable_decl += 'char * p%d;\n' % arg_idx
             fetch_code += 'p%d = serial_alloc_get_string(%d);\n' % (arg_idx, arg_idx)
             params.append('p%d' % arg_idx)
-            cleanup += 'free(p%d);\n' % arg_idx
+            cleanup += 'if (p%d != NULL)free(p%d);\n' % (arg_idx, arg_idx)
         fetch_code += 'if (test_errors) return;\n'
     return wrapper.format(function=function, deps_start=deps_code, deps_end=deps_end, wrapper_name=wrapper_name,
                           variable_decl=variable_decl, fetch_code=fetch_code, params=', '.join(params),
