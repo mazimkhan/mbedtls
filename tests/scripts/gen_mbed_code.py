@@ -139,7 +139,7 @@ exit:
     code += body
     # Then create the wrapper
     wrapper = '''
-void test_{name}_wrapper(Param_t * params){{
+void test_{name}_wrapper(void ** params){{
     {variable_decl}
     {int_conversions}
     test_{name}({args});
@@ -152,10 +152,10 @@ void test_{name}_wrapper(Param_t * params){{
     for var in args:
         if var == 'int':
             variable_decl += '%s p%d;\n' % (var, arg_idx)
-            int_conv += "p%d = *((int *)params[%d].data);\n" % (arg_idx, arg_idx)
+            int_conv += "p%d = *((int *)params[%d]);\n" % (arg_idx, arg_idx)
             params.append('p%d' % arg_idx)
         elif var == 'char*':
-            params.append('(%s)params[%d].data' % (var, arg_idx))
+            params.append('(%s)params[%d]' % (var, arg_idx))
         arg_idx += 1
     code += wrapper.format(name=name, variable_decl=variable_decl, int_conversions=int_conv, args=', '.join(params))
     # Put deps endif s
@@ -164,10 +164,11 @@ void test_{name}_wrapper(Param_t * params){{
     return code
 
 
-def gen_dispatch(name, deps):
+def gen_dispatch(func_id, name, deps):
     """
     Generates dispatch condition for the functions.
 
+    :param func_id:
     :param name:
     :param deps:
     :return:
@@ -175,10 +176,10 @@ def gen_dispatch(name, deps):
     dispatch_code, dep_end = gen_deps(deps)
 
     dispatch_code += '''
-if (strcmp(func_name, "{name}") == 0){{
+if (func_id == {func_id}){{
     test_{name}_wrapper(params);
 }} else
-'''.format(name=name) + dep_end
+'''.format(func_id=func_id, name=name) + dep_end
     return dispatch_code
 
 
@@ -221,6 +222,8 @@ def get_functions(funcs_data, func_deps):
     cursor = funcs_data
     functions_code = ''
     dispatch_code = ''
+    functions = {}
+    identifier = 0
 
     begin = find_regex(BEGIN_CASE_REGEX, cursor, False)
     end = find_regex(END_CASE_REGEX, cursor, True)
@@ -228,25 +231,137 @@ def get_functions(funcs_data, func_deps):
     while -1 not in (begin, end):
         body = cursor[offset + begin:offset + end]
         name, deps, args = parse_function_signature(body.strip())
+        assert name not in functions, "Function '%s' declared multiple times" % name
+        functions[name] = (identifier, deps, args)
         functions_code += gen_function(name, deps, args, body)
-        dispatch_code += gen_dispatch(name, deps)
+        dispatch_code += gen_dispatch(identifier, name, deps)
 
         # Find next function
         offset += end
         begin = find_regex(BEGIN_CASE_REGEX, cursor[offset:], False)
         end = find_regex(END_CASE_REGEX, cursor[offset:], True)
+        identifier += 1
 
     ifdef, endif = gen_deps(func_deps)
     functions_code = ifdef + functions_code + endif
     dispatch_code = ifdef + dispatch_code + endif
-    # TBDs
-    # find hex arguments
-    # remove hexify code
-    # create wrapper code
 
-    return {'functions_code': functions_code, 'dispatch_code': dispatch_code}
+    return {'functions_code': functions_code, 'dispatch_code': dispatch_code}, functions
 
 
+def escaped_split(str, ch):
+    """
+    """
+    if len(ch) > 1:
+        raise ValueError('Expected split character. Found string!')
+    out = []
+    part = ''
+    escape = False
+    for i in range(len(str)):
+        if not escape and str[i] == ch:
+            out.append(part)
+            part = ''
+        else:
+            part += str[i]
+            escape = not escape and str[i] == '\\'
+    if len(part):
+        out.append(part)
+    return out
+
+
+def gen_test_data(data_file, out_data_file, functions):
+    tests = []
+    line = data_file.readline().strip()
+    unique_deps = []
+    unique_expressions = []
+    unique_expressions_deps = []
+    while line:
+        line = line.strip()
+        if len(line) == 0:
+            line = data_file.readline()
+            continue
+        # Read test name
+        name = line
+        out_data_file.write(name + '\n')
+
+        # Check dependencies
+        deps = []
+        line = data_file.readline().strip()
+        m = re.search('depends_on\:(.*)', line)
+        if m:
+            out_data_file.write('depends_on')
+            deps = m.group(1).split(':')
+            for dep in deps:
+                if dep not in unique_deps:
+                    unique_deps.append(dep)
+                out_data_file.write(":" + str(unique_deps.index(dep)))
+            out_data_file.write('\n')
+            line = data_file.readline().strip()
+
+        # Read test vectors
+        parts = escaped_split(line, ':')
+        function = parts[0]
+        assert function in functions, "Test function '%s' not in functions file" % function
+        func_id, func_deps, func_args = functions[function]
+        args = parts[1:]
+        assert len(args) == len(func_args), "Test '%s' params does not match function arguments" % name
+        out_data_file.write(str(func_id))
+        for i in range(len(args)):
+            typ = func_args[i]
+            data = args[i]
+            if typ == 'int' and not re.match('\d+', data):  # its an expression
+                if data not in unique_expressions:
+                    unique_expressions_deps.append(func_deps)
+                    unique_expressions.append(data)
+                else:
+                    idx = unique_expressions.index(data)
+                    # remove any exclusive deps
+                    exclusive_deps = []
+                    for dep in unique_expressions_deps[idx]:
+                        if dep not in func_deps:
+                            exclusive_deps.append(dep)
+                    for dep in exclusive_deps:
+                        unique_expressions_deps[idx].remove(dep)
+                data = unique_expressions.index(data)
+                typ = 'exp'
+            out_data_file.write(':' + typ + ':' + str(data))
+
+        out_data_file.write('\n')
+        tests.append((name, function, deps, args))
+        line = data_file.readline()
+    dep_checks = ''
+    for i in range(len(unique_deps)):
+        dep = unique_deps[i]
+        if dep[0] == '!':
+            noT = '!'
+            dep = dep[1:]
+        else:
+            noT = ''
+        dep_checks += '''
+#if {noT}defined ({macro})
+if (dep_id == {id}) {{
+    return DEPENDENCY_SUPPORTED;
+}} else
+#endif
+'''.format(noT=noT, macro=dep, id=i)
+
+    expressions = ''
+    for i in range(len(unique_expressions)):
+        expression = unique_expressions[i]
+        deps = unique_expressions_deps[i]
+        ifdef, endif = gen_deps(deps)
+        expressions += '''
+{ifdef}
+if (exp_id == {exp_id}) {{
+    return {expression};
+}} else
+{endif}
+'''.format(exp_id=i, expression=expression, ifdef=ifdef, endif=endif)
+
+    return dep_checks, expressions
+
+
+# not used
 def gen_dependency_checks(data_file):
     """
     Generate dependency check code for test dependencies
@@ -279,7 +394,7 @@ def gen_dependency_checks(data_file):
     return checks
 
 
-def gen_mbed_code(funcs_file, data_file, template_file, help_file, suites_dir, c_file):
+def gen_mbed_code(funcs_file, data_file, template_file, help_file, suites_dir, c_file, out_data_file):
     """
     Generate mbed-os test code.
 
@@ -289,6 +404,7 @@ def gen_mbed_code(funcs_file, data_file, template_file, help_file, suites_dir, c
     :param help_file:
     :param suites_dir:
     :param c_file:
+    :param out_data_file:
     :return:
     """
     for name, path in [('Functions file', funcs_file),
@@ -308,12 +424,14 @@ def gen_mbed_code(funcs_file, data_file, template_file, help_file, suites_dir, c
         snippets['test_common_helpers']= help_code
 
     # Function code
-    with open(funcs_file, 'r') as funcs_f:
+    with open(funcs_file, 'r') as funcs_f, open(data_file, 'r') as data_f, open(out_data_file, 'w') as out_data_f:
         funcs_data = funcs_f.read()
         snippets['function_headers'] = get_func_headers(funcs_data)
         deps = get_func_deps(funcs_data)
-        function_attrs = get_functions(funcs_data, deps)
-        snippets['dep_check_code'] = gen_dependency_checks(data_file)
+        function_attrs, function_info = get_functions(funcs_data, deps)
+        dep_check_code, expression_code = gen_test_data(data_f, out_data_f, function_info)
+        snippets['dep_check_code'] = dep_check_code
+        snippets['expression_code'] = expression_code
         snippets.update(function_attrs)
 
     snippets['test_file'] = c_file
@@ -326,9 +444,6 @@ def gen_mbed_code(funcs_file, data_file, template_file, help_file, suites_dir, c
     with open(template_file, 'r') as template_f:
         template = template_f.read()
         code = template.format(**snippets)
-        c_file_dir = os.path.dirname(c_file)
-        if not os.path.exists(c_file_dir):
-            os.makedirs(c_file_dir)
         with open(c_file, 'w') as c_f:
             c_f.write(code)
 
@@ -382,9 +497,18 @@ def check_cmd():
     args = parser.parse_args()
 
     # FIXME since we are working out some paths. better revisit command line arguments
-    data_name = os.path.splitext(os.path.basename(args.data_file))[0]
-    c_file = os.path.join(args.out_dir, 'mbedtls', data_name, 'main.c')
-    gen_mbed_code(args.funcs_file, args.data_file, args.template_file, args.help_file, args.suites_dir, c_file)
+    data_file_name = os.path.basename(args.data_file)
+    data_name = os.path.splitext(data_file_name)[0]
+    out_c_file = os.path.join(args.out_dir, 'mbedtls', data_name, 'main.c')
+    out_data_file = os.path.join(args.out_dir, 'host_tests', 'suites', data_file_name)
+    out_c_file_dir = os.path.dirname(out_c_file)
+    out_data_file_dir = os.path.dirname(out_data_file)
+    for d in [out_c_file_dir, out_data_file_dir]:
+        if not os.path.exists(d):
+            os.makedirs(d)
+
+    gen_mbed_code(args.funcs_file, args.data_file, args.template_file,
+                  args.help_file, args.suites_dir, out_c_file, out_data_file)
 
 
 if __name__ == "__main__":
