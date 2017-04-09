@@ -94,9 +94,13 @@ class TestDataParser(object):
                 line = file.readline().strip()
 
             # Read test vectors
+            line = line.replace('\\n', '\n#')
             parts = self.__escaped_split(line, ':')
             function = parts[0]
-            args = parts[1:]
+            x = parts[1:]
+            l = len(x)
+            assert l % 2 == 0, "Number of test arguments should be even: %s" % line
+            args = [(x[i * 2], x[(i * 2) + 1]) for i in range(len(x)/2)]
             self.tests.append((name, function, deps, args))
             line = file.readline()
 
@@ -104,15 +108,6 @@ class TestDataParser(object):
         """
         """
         return self.tests
-
-    def get_all_deps(self):
-        """
-        Gives a list of dependencies across all tests
-        """
-        deps = []
-        for test in self.tests:
-            deps += test[2]
-        return deps
 
 
 class MbedTlsTest(BaseHostTest):
@@ -157,10 +152,10 @@ class MbedTlsTest(BaseHostTest):
             self.log('{{__testcase_start;%s}}' % name)
             if len(deps):
                 dep = deps[self.dep_index]
-                self.send_kv('check_dep', str(dep))
+                self.send_kv('CD', dep)
                 self.dep_index += 1
             else:
-                self.send_kv("call", function)
+                self.send_kv("T", function)
         else:
             self.notify_complete(True)
 
@@ -189,47 +184,51 @@ class MbedTlsTest(BaseHostTest):
             self.log("ValueError for received value in 'check_dep' k,v. Should be integer.")
         return 0
 
-    @event_callback('start_test')
+    @event_callback('GO')
     def on_start_test(self, key, value, timestamp):
         self.run_next_test()
 
-    @event_callback('check_dep')
+    @event_callback('CD')
     def on_dep_check(self, key, value, timestamp):
         int_val = self.get_result(value)
         name, function, deps, args = self.tests[self.test_index]
         if value == 1:
             if self.dep_index < len(deps):
                 dep = deps[self.dep_index]
-                self.send_kv('check_dep', str(dep))
+                self.send_kv('CD', dep)
                 self.dep_index += 1
             else:
-                self.send_kv("call", function)
+                self.send_kv("T", function)
         else:
             self.log('{{__testcase_finish;%s;%d;%d}}' % (name, int_val, not int_val))
 
-    @event_callback('send_count')
+    @event_callback('SC')
     def on_send_count(self, key, value, timestamp):
         name, function, deps, args = self.tests[self.test_index]
         self.send_kv("N", len(args))
 
-    @event_callback('send_param')
+    @event_callback('SP')
     def on_send_param(self, key, value, timestamp):
         i = int(value)
         name, function, deps, args = self.tests[self.test_index]
-        arg = args[i]
-        if re.match('^\d+$', arg):
+        typ, arg = args[i]
+        if typ == 'int':
             self.send_kv("I", arg)
-        else:
+        elif typ == 'exp':
+            self.send_kv("E", arg)
+        elif typ == 'char*':
             self.send_kv("S", str(len(arg.strip('"'))))
+        else:
+            raise ValueError("Invalid type '%s'" % typ)
 
-    @event_callback('send_data')
+    @event_callback('D')
     def on_send_data(self, key, value, timestamp):
         i = int(value)
         name, function, deps, args = self.tests[self.test_index]
-        arg = args[i]
+        typ, arg = args[i]
         self.send_kv('D', arg.strip('"'))
 
-    @event_callback("result")
+    @event_callback("R")
     def on_result(self, key, value, timestamp):
         """
         Handle result.
