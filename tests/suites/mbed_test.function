@@ -37,28 +37,31 @@
 /*----------------------------------------------------------------------------*/
 /* Parameter parsing code */
 
-typedef struct {{
-    unsigned char * data;
-    char type;
-}} Param_t;
+int get_expression(int exp_id) {{
+{expression_code}
+    {{
+        printf ("Expression %d not found\r\n", exp_id);
+        return -1;
+    }}
+}}
 
-void free_params(Param_t *params){{
-    Param_t * p = params;
-    while(p->data){{
-        free(p->data);
+void free_params(void ** params){{
+    void ** p = params;
+    while(*p){{
+        free(*p);
         p++;
     }}
     free(params);
 }}
 
-Param_t * serial_parse_arguments() {{
+void ** serial_parse_arguments() {{
     int ret, num_args, int_val;
     char key[2];
     char val[10], num[10];
-    Param_t * params = NULL;
+    void ** params = NULL;
 
     // Get no. of arguments
-    greentea_send_kv_c("send_count", " ");
+    greentea_send_kv_c("SC", " ");
     ret = greentea_parse_kv_c(key, val, sizeof(key), sizeof(val));
     if (ret == 0) {{
         // received eof while receiving data
@@ -66,42 +69,48 @@ Param_t * serial_parse_arguments() {{
         return NULL;
     }}
     // Covert number of param string to int
-    int_val = atoi(val);
     num_args = atoi(val);
 
     // allocate params array based on num arguments
-    params = (Param_t *)malloc(sizeof(Param_t) * (num_args + 1));
-    memset(params, 0, sizeof(Param_t) * (num_args + 1));
+    params = (void **)malloc(sizeof(void *) * (num_args + 1));
+    for (int i = 0; i < (num_args + 1); i++){{
+        params[i] = NULL;
+    }}
 
     for (int i = 0; i < num_args; i++){{
         snprintf(num, sizeof(num), "%d", i);
         printf ("Requesting param %s\r\n", num);
-        greentea_send_kv_c("send_param", num);
+        greentea_send_kv_c("SP", num);
         ret = greentea_parse_kv_c(key, val, sizeof(key), sizeof(val));
         if (ret == 0) {{
             free_params(params);
             return NULL;
         }}
 
-        params[i].type = key[0];
         int_val = atoi(val);
         printf ("Got argument type %s of len %d\r\n", key, int_val);
 
         switch(key[0]){{
             case 'I': {{
                           // convert val into integer and store in the array
-                          params[i].data = (unsigned char *)malloc(sizeof(int));
-                          *((int *)params[i].data) = int_val;
+                          params[i] = malloc(sizeof(int));
+                          *((int *)params[i]) = int_val;
                       }}
                       break;
             case 'S':
             case 'H': {{
+                          params[i] = malloc(int_val + 1);
                           if (int_val > 0){{
                               // receive hex/string
-                              params[i].data = (unsigned char *)malloc(int_val + 1);
-                              greentea_send_kv_c("send_data", num);
-                              ret = greentea_parse_kv_c(key, (char *)params[i].data, sizeof(key), int_val + 1);
+                              greentea_send_kv_c("D", num);
+                              ret = greentea_parse_kv_c(key, (char *)params[i], sizeof(key), int_val + 1);
                           }}
+                          ((char *)params[i])[int_val] = 0; // Null terminate special for 0 len strings
+                      }}
+                      break;
+            case 'E': {{
+                          params[i] = malloc(sizeof(int));
+                          *((int *)params[i]) = get_expression(int_val);
                       }}
                       break;
             default: {{
@@ -144,12 +153,12 @@ int dep_check( int dep_id )
     }}
 }}
 
-void dispatch_test(char * func_name, Param_t * params)
+void dispatch_test(int func_id, void ** params)
 {{
 {dispatch_code} 
 //#line !LINE_NO! "main_test.function"
 {{
-    printf("Test function '%s' not found\r\n", func_name);
+    printf("Test function '%d' not found\r\n", func_id);
     test_errors++;
 }}
 }}
@@ -167,33 +176,29 @@ int main(int argc, const char *argv[]) {{
     while (1) {{
         fflush(stdout);
         test_errors = 0;
-        greentea_send_kv_c("start_test", " ");
+        greentea_send_kv_c("GO", " ");
         if (greentea_parse_kv_c(key, val, sizeof(key), sizeof(val))) {{
-            if (strcmp(key, "check_dep") == 0) {{
-                int dep_id;
-                dep_id = atoi(val);
-                if (dep_check(dep_id) == DEPENDENCY_SUPPORTED) {{
-                    greentea_send_kv_c("check_dep", "1");
+            if (strcmp(key, "CD") == 0) {{
+                if (dep_check(atoi(val)) == DEPENDENCY_SUPPORTED) {{
+                    greentea_send_kv_c("CD", "1");
                 }} else {{
-                    greentea_send_kv_c("check_dep", "0");
+                    greentea_send_kv_c("CD", "0");
                 }}
-            }} else if (strcmp(key, "call") == 0) {{
-                Param_t * params = serial_parse_arguments();
+            }} else if (strcmp(key, "T") == 0) {{
+                void * params = serial_parse_arguments();
                 if (params == NULL){{
                     printf ("Failed to parse parameters!\r\n"); // TBD align printf API
                     test_errors++;
                 }} else {{
-                    printf ("\r\nChecking function %s\r\n", val);
-                    fflush(stdout);
-                    dispatch_test(val, params);
+                    dispatch_test(atoi(val), params);
                     free_params(params);
                 }}
-                greentea_send_kv_c("result", (test_errors)?"0":"1");
+                greentea_send_kv_c("R", (test_errors)?"0":"1");
             }} else {{
                 printf ("Unexpected K,V pair: %s;%s\r\n", key, val);
             }}
         }} else {{
-            greentea_send_kv_c("result", "0");
+            greentea_send_kv_c("R", "0");
             continue;
         }}
     }}
