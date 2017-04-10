@@ -177,7 +177,7 @@ def gen_dispatch(func_id, name, deps):
 
     dispatch_code += '''
 if (func_id == {func_id}){{
-    test_{name}_wrapper(params);
+    return test_{name}_wrapper;
 }} else
 '''.format(func_id=func_id, name=name) + dep_end
     return dispatch_code

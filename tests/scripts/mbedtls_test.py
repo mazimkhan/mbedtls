@@ -132,13 +132,20 @@ class MbedTlsTest(BaseHostTest):
         data_file = os.path.join(script_dir, 'suites', data_file)
         if os.path.exists(data_file):
             self.log("Running tests from %s" % data_file)
-
             parser = TestDataParser()
             parser.parse(data_file)
             self.tests = parser.get_test_data()
+            self.print_test_info()
         else:
             self.log("Data file not found: %s" % data_file)
             self.notify_complete(False)
+
+    def print_test_info(self):
+        """
+        """
+        self.log('{{__testcase_count;%d}}' % len(self.tests))
+        for name, _, _, _ in self.tests:
+            self.log('{{__testcase_name;%s}}' % name)
 
     def run_next_test(self):
         """
@@ -147,9 +154,9 @@ class MbedTlsTest(BaseHostTest):
         """
         self.test_index += 1
         self.dep_index = 0
+        self.test_started = False
         if self.test_index < len(self.tests):
             name, function, deps, args = self.tests[self.test_index]
-            self.log('{{__testcase_start;%s}}' % name)
             if len(deps):
                 dep = deps[self.dep_index]
                 self.send_kv('CD', dep)
@@ -185,22 +192,19 @@ class MbedTlsTest(BaseHostTest):
         return 0
 
     @event_callback('GO')
-    def on_start_test(self, key, value, timestamp):
+    def on_go(self, key, value, timestamp):
         self.run_next_test()
 
     @event_callback('CD')
     def on_dep_check(self, key, value, timestamp):
-        int_val = self.get_result(value)
         name, function, deps, args = self.tests[self.test_index]
-        if value == 1:
+        if value == "1":
             if self.dep_index < len(deps):
                 dep = deps[self.dep_index]
                 self.send_kv('CD', dep)
                 self.dep_index += 1
             else:
                 self.send_kv("T", function)
-        else:
-            self.log('{{__testcase_finish;%s;%d;%d}}' % (name, int_val, not int_val))
 
     @event_callback('SC')
     def on_send_count(self, key, value, timestamp):
@@ -227,6 +231,13 @@ class MbedTlsTest(BaseHostTest):
         name, function, deps, args = self.tests[self.test_index]
         typ, arg = args[i]
         self.send_kv('D', arg.strip('"'))
+
+    @event_callback("ST")
+    def on_start_test(self, key, value, timestamp):
+        """
+        """
+        name, function, deps, args = self.tests[self.test_index]
+        self.log('{{__testcase_start;%s}}' % name)
 
     @event_callback("R")
     def on_result(self, key, value, timestamp):

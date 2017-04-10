@@ -37,6 +37,8 @@
 /*----------------------------------------------------------------------------*/
 /* Parameter parsing code */
 
+typedef void (*TestWrapper_t)(void **);
+
 int get_expression(int exp_id) {{
 {expression_code}
     {{
@@ -153,13 +155,13 @@ int dep_check( int dep_id )
     }}
 }}
 
-void dispatch_test(int func_id, void ** params)
+TestWrapper_t dispatch_test(int func_id)
 {{
 {dispatch_code} 
 //#line !LINE_NO! "main_test.function"
 {{
     printf("Test function '%d' not found\r\n", func_id);
-    test_errors++;
+    return NULL;
 }}
 }}
 
@@ -185,21 +187,25 @@ int main(int argc, const char *argv[]) {{
                     greentea_send_kv_c("CD", "0");
                 }}
             }} else if (strcmp(key, "T") == 0) {{
-                void * params = serial_parse_arguments();
-                if (params == NULL){{
-                    printf ("Failed to parse parameters!\r\n"); // TBD align printf API
-                    test_errors++;
-                }} else {{
-                    dispatch_test(atoi(val), params);
-                    free_params(params);
+
+                TestWrapper_t fp = dispatch_test(atoi(val));
+                if (fp) {{
+                    void ** params = serial_parse_arguments();
+                    if (params){{
+                        greentea_send_kv_c("ST", " ");
+                        fp(params);
+                        free_params(params);
+                    }} else {{
+                        printf ("Failed to parse parameters!\r\n"); // TBD align printf API
+                        test_errors++;
+                    }}
+                    greentea_send_kv_c("R", (test_errors)?"0":"1");
                 }}
-                greentea_send_kv_c("R", (test_errors)?"0":"1");
             }} else {{
                 printf ("Unexpected K,V pair: %s;%s\r\n", key, val);
             }}
         }} else {{
-            greentea_send_kv_c("R", "0");
-            continue;
+            printf("Error parsing k,v from host!\r\n");
         }}
     }}
 }}
