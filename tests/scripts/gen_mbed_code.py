@@ -71,6 +71,22 @@ def gen_deps(deps):
     return dep_start, dep_end
 
 
+def gen_deps_one_line(deps):
+    """
+    :param deps:
+    :return:
+    """
+    defines = []
+    for dep in deps:
+        if dep[0] == '!':
+            noT = '!'
+            dep = dep[1:]
+        else:
+            noT = ''
+        defines.append('%sdefined (%s)' % (noT, dep))
+    return '#if ' + ' && '.join(defines)
+
+
 def parse_function_signature(func):
     """
     Parses function signature and gives return type, function name, argument list.
@@ -173,13 +189,20 @@ def gen_dispatch(func_id, name, deps):
     :param deps:
     :return:
     """
-    dispatch_code, dep_end = gen_deps(deps)
+    if len(deps):
+        ifdef = gen_deps_one_line(deps)
+        dispatch_code = '''
+{ifdef}
+    test_{name}_wrapper,
+#else
+    NULL,
+#endif
+'''.format(ifdef=ifdef, name=name)
+    else:
+        dispatch_code = '''
+    test_{name}_wrapper,
+'''.format(name=name)
 
-    dispatch_code += '''
-if (func_id == {func_id}){{
-    return test_{name}_wrapper;
-}} else
-'''.format(func_id=func_id, name=name) + dep_end
     return dispatch_code
 
 
@@ -353,7 +376,7 @@ if (dep_id == {id}) {{
         expressions += '''
 {ifdef}
 if (exp_id == {exp_id}) {{
-    return {expression};
+    *out = {expression};
 }} else
 {endif}
 '''.format(exp_id=i, expression=expression, ifdef=ifdef, endif=endif)
