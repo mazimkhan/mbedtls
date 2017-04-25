@@ -24,6 +24,10 @@
 #include MBEDTLS_CONFIG_FILE
 #endif
 
+#define MBEDTLS_TEST_ERROR_FUNC_NOT_FOUND               0xf100
+#define MBEDTLS_TEST_ERROR_DEPENDENCY_NOT_SUPPORTED     0xf200
+#define MBEDTLS_TEST_ERROR_GT_PARSE_ERROR               0xf400
+
 
 {function_headers}
 
@@ -39,12 +43,12 @@
 
 typedef void (*TestWrapper_t)(void **);
 
-int get_expression(int exp_id) {{
+int get_expression(int exp_id, int * out) {{
 {expression_code}
     {{
-        printf ("Expression %d not found\r\n", exp_id);
-        return -1;
+        return 1;
     }}
+    return 0;
 }}
 
 void free_params(void ** params){{
@@ -112,7 +116,7 @@ void ** serial_parse_arguments() {{
                       break;
             case 'E': {{
                           params[i] = malloc(sizeof(int));
-                          *((int *)params[i]) = get_expression(int_val);
+                          assert (get_expression(int_val, (int *)params[i]) == 0);
                       }}
                       break;
             default: {{
@@ -120,6 +124,7 @@ void ** serial_parse_arguments() {{
                          free_params(params);
                          return NULL;
                      }}
+                     break;
         }}
     }}
     return params;
@@ -150,20 +155,14 @@ int dep_check( int dep_id )
 
 //#line !LINE_NO! "main_test.function"
     {{
-         printf ("DEPENDENCY_NOT_SUPPORTED!\r\n");
          return( DEPENDENCY_NOT_SUPPORTED );
     }}
 }}
 
-TestWrapper_t dispatch_test(int func_id)
-{{
+TestWrapper_t test_funcs[] = {{
 {dispatch_code} 
-//#line !LINE_NO! "main_test.function"
-{{
-    printf("Test function '%d' not found\r\n", func_id);
-    return NULL;
-}}
-}}
+}};
+
 
 /*----------------------------------------------------------------------------*/
 /* Main Test code */
@@ -173,40 +172,45 @@ int main(int argc, const char *argv[]) {{
     char key[50];
     char val[100];
 
-    GREENTEA_SETUP_C(120, "mbedtls_test");
+    GREENTEA_SETUP_C(180, "mbedtls_test");
+    greentea_send_kv_c("GO", " ");
 
     while (1) {{
-        fflush(stdout);
         test_errors = 0;
-        greentea_send_kv_c("GO", " ");
         if (greentea_parse_kv_c(key, val, sizeof(key), sizeof(val))) {{
             if (strcmp(key, "CD") == 0) {{
                 if (dep_check(atoi(val)) == DEPENDENCY_SUPPORTED) {{
                     greentea_send_kv_c("CD", "1");
+                    continue; // Skip sending go as that changes to next test. Spec: CD==1 should follow CD or T
                 }} else {{
-                    greentea_send_kv_c("CD", "0");
+                    test_errors = MBEDTLS_TEST_ERROR_DEPENDENCY_NOT_SUPPORTED;
                 }}
             }} else if (strcmp(key, "T") == 0) {{
-
-                TestWrapper_t fp = dispatch_test(atoi(val));
+                TestWrapper_t fp = NULL;
+                int func_idx = atoi(val);
+                if (func_idx < sizeof(test_funcs)/sizeof(TestWrapper_t)) {{
+                    fp = test_funcs[func_idx];
+                }}
                 if (fp) {{
                     void ** params = serial_parse_arguments();
-                    if (params){{
+                    if (params) {{
                         greentea_send_kv_c("ST", " ");
                         fp(params);
                         free_params(params);
                     }} else {{
-                        printf ("Failed to parse parameters!\r\n"); // TBD align printf API
-                        test_errors++;
+                        test_errors = MBEDTLS_TEST_ERROR_GT_PARSE_ERROR;
                     }}
-                    greentea_send_kv_c("R", (test_errors)?"0":"1");
+                }} else {{
+                    test_errors = MBEDTLS_TEST_ERROR_FUNC_NOT_FOUND;
                 }}
             }} else {{
-                printf ("Unexpected K,V pair: %s;%s\r\n", key, val);
+                test_errors = MBEDTLS_TEST_ERROR_GT_PARSE_ERROR;
             }}
         }} else {{
-            printf("Error parsing k,v from host!\r\n");
+            test_errors = MBEDTLS_TEST_ERROR_GT_PARSE_ERROR;
         }}
+        snprintf(val, sizeof(val), "%d", test_errors); // TBD: htonl 
+        greentea_send_kv_c("R", val);
     }}
 }}
 
