@@ -114,6 +114,9 @@ class MbedTlsTest(BaseHostTest):
     """
     Host test for mbed-tls target tests.
     """
+    MBEDTLS_TEST_ERROR_FUNC_NOT_FOUND               = 0xf100
+    MBEDTLS_TEST_ERROR_DEPENDENCY_NOT_SUPPORTED     = 0xf200
+    MBEDTLS_TEST_ERROR_GT_PARSE_ERROR               = 0xf400
 
     def __init__(self):
         """
@@ -154,7 +157,6 @@ class MbedTlsTest(BaseHostTest):
         """
         self.test_index += 1
         self.dep_index = 0
-        self.test_started = False
         if self.test_index < len(self.tests):
             name, function, deps, args = self.tests[self.test_index]
             if len(deps):
@@ -184,11 +186,12 @@ class MbedTlsTest(BaseHostTest):
             return name
         return None
 
-    def get_result(self, value):
+    @staticmethod
+    def get_result(value):
         try:
             return int(value)
         except ValueError:
-            self.log("ValueError for received value in 'check_dep' k,v. Should be integer.")
+            ValueError("Result should return error number. Instead received %s" % value)
         return 0
 
     @event_callback('GO')
@@ -198,13 +201,13 @@ class MbedTlsTest(BaseHostTest):
     @event_callback('CD')
     def on_dep_check(self, key, value, timestamp):
         name, function, deps, args = self.tests[self.test_index]
-        if value == "1":
-            if self.dep_index < len(deps):
-                dep = deps[self.dep_index]
-                self.send_kv('CD', dep)
-                self.dep_index += 1
-            else:
-                self.send_kv("T", function)
+        assert value == "1", "Check dependency received value should be 1"
+        if self.dep_index < len(deps):
+            dep = deps[self.dep_index]
+            self.send_kv('CD', dep)
+            self.dep_index += 1
+        else:
+            self.send_kv("T", function)
 
     @event_callback('SC')
     def on_send_count(self, key, value, timestamp):
@@ -247,5 +250,14 @@ class MbedTlsTest(BaseHostTest):
         """
         int_val = self.get_result(value)
         name, function, deps, args = self.tests[self.test_index]
-        self.log('{{__testcase_finish;%s;%d;%d}}' % (name, int_val, not int_val))
-
+        if int_val == 0:
+            self.log('{{__testcase_finish;%s;%d;%d}}' % (name, 1, 0))
+        elif int_val == self.MBEDTLS_TEST_ERROR_DEPENDENCY_NOT_SUPPORTED:
+            self.log("Dependency not supported for test: %s" % name)
+        elif int_val == self.MBEDTLS_TEST_ERROR_FUNC_NOT_FOUND:
+            self.log("Test functions not supported for test %s" % name)
+        elif int_val == self.MBEDTLS_TEST_ERROR_GT_PARSE_ERROR:
+            self.log("Greentea parsing error in test %s" % name)
+        else:
+            self.log('{{__testcase_finish;%s;%d;%d}}' % (name, 0, 1))
+        self.run_next_test()
