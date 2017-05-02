@@ -417,13 +417,14 @@ def gen_dependency_checks(data_file):
     return checks
 
 
-def gen_mbed_code(funcs_file, data_file, template_file, help_file, suites_dir, c_file, out_data_file):
+def gen_mbed_code(funcs_file, data_file, template_file, platform_file, help_file, suites_dir, c_file, out_data_file):
     """
     Generate mbed-os test code.
 
     :param funcs_file:
     :param dat  a_file:
     :param template_file:
+    :param platform_file:
     :param help_file:
     :param suites_dir:
     :param c_file:
@@ -433,18 +434,20 @@ def gen_mbed_code(funcs_file, data_file, template_file, help_file, suites_dir, c
     for name, path in [('Functions file', funcs_file),
                        ('Data file', data_file),
                        ('Template file', template_file),
+                       ('Platform file', platform_file),
                        ('Help code file', help_file),
                        ('Suites dir', suites_dir)]:
         if not os.path.exists(path):
-            raise IOError ("ERROR: %s [%s] not found!" % (name, path))
+            raise IOError("ERROR: %s [%s] not found!" % (name, path))
 
     snippets = {}
 
     # Read helpers
-    with open(help_file, 'r') as help_f:
-        help_code = help_f.read()
+    with open(help_file, 'r') as help_f, open(platform_file, 'r') as platform_f:
         snippets['test_common_helper_file'] = help_file
-        snippets['test_common_helpers']= help_code
+        snippets['test_common_helpers'] = help_f.read()
+        snippets['test_platform_file'] = help_file
+        snippets['platform_code'] = platform_f.read()
 
     # Function code
     with open(funcs_file, 'r') as funcs_f, open(data_file, 'r') as data_f, open(out_data_file, 'w') as out_data_f:
@@ -464,13 +467,14 @@ def gen_mbed_code(funcs_file, data_file, template_file, help_file, suites_dir, c
     # Read Template
     # Add functions
     #
-    with open(template_file, 'r') as template_f:
-        template = template_f.read()
-        code = template.format(**snippets)
-        with open(c_file, 'w') as c_f:
+    with open(template_file, 'r') as template_f, open(c_file, 'w') as c_f:
+        line_no = 1
+        for line in template_f.readlines():
+            print "line no %d: %s" % (line_no, line)
+            snippets['line_no'] = line_no
+            code = line.format(**snippets)
             c_f.write(code)
-
-    pass
+            line_no += 1
 
 
 def check_cmd():
@@ -511,6 +515,12 @@ def check_cmd():
                         metavar="HELPER",
                         required=True)
 
+    parser.add_argument("-p", "--platform-file",
+                        dest="platform_file",
+                        help="Platform code file",
+                        metavar="PLATFORM_FILE",
+                        required=True)
+
     parser.add_argument("-o", "--out-dir",
                         dest="out_dir",
                         help="Dir where generated code and scripts are copied",
@@ -522,15 +532,21 @@ def check_cmd():
     # FIXME since we are working out some paths. better revisit command line arguments
     data_file_name = os.path.basename(args.data_file)
     data_name = os.path.splitext(data_file_name)[0]
-    out_c_file = os.path.join(args.out_dir, 'mbedtls', data_name, 'main.c')
-    out_data_file = os.path.join(args.out_dir, 'host_tests', 'suites', data_file_name)
+
+    # Move mbed specific deployment in a separate script
+    #out_c_file = os.path.join(args.out_dir, 'mbedtls', data_name, 'main.c')
+    #out_data_file = os.path.join(args.out_dir, 'host_tests', 'suites', data_file_name)
+
+    out_c_file = os.path.join(args.out_dir, data_name + '.c')
+    out_data_file = os.path.join(args.out_dir, data_file_name)
+
     out_c_file_dir = os.path.dirname(out_c_file)
     out_data_file_dir = os.path.dirname(out_data_file)
     for d in [out_c_file_dir, out_data_file_dir]:
         if not os.path.exists(d):
             os.makedirs(d)
 
-    gen_mbed_code(args.funcs_file, args.data_file, args.template_file,
+    gen_mbed_code(args.funcs_file, args.data_file, args.template_file, args.platform_file,
                   args.help_file, args.suites_dir, out_c_file, out_data_file)
 
 

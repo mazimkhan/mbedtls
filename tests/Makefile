@@ -160,9 +160,16 @@ $(DEP):
 C_FILES := $(addsuffix .c,$(APPS))
 
 .SECONDEXPANSION:
-$(C_FILES): %.c: suites/$$(func.$$*).function suites/%.data scripts/generate_code.pl suites/helpers.function suites/main_test.function
+$(C_FILES): %.c: suites/$$(func.$$*).function suites/%.data scripts/generate_code.pl suites/helpers.function suites/mbed_test.function
 	echo "  Gen   $@"
-	perl scripts/generate_code.pl suites $(func.$*) $*
+#	perl scripts/generate_code.pl suites $(func.$*) $*
+	python scripts/gen_mbed_code.py -f suites/$(func.$*).function \
+		-d suites/$*.data \
+		-t suites/mbed_test.function \
+		-p suites/fs_test.function \
+		-s suites  \
+		--help-file suites/helpers.function \
+		-o .
 
 
 BINARIES := $(addsuffix $(EXEXT),$(APPS))
