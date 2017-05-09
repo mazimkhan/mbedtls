@@ -1,4 +1,4 @@
-#line 1 "mbed_test.function"
+#line 2 "suites/mbed_test.function"
 /*
  * *** THIS FILE HAS BEEN MACHINE GENERATED ***
  *
@@ -29,9 +29,7 @@
 #define MBEDTLS_TEST_ERROR_GT_PARSE_ERROR               0xf400
 
 
-{function_headers}
-
-#line {line_no} "mbed_test.function"
+#line {line_no} "suites/mbed_test.function"
 
 
 /*----------------------------------------------------------------------------*/
@@ -39,22 +37,7 @@
 
 {test_common_helpers}
 
-#line {line_no} "mbed_test.function"
-
-
-/*----------------------------------------------------------------------------*/
-/* Parameter parsing code */
-
-typedef void (*TestWrapper_t)(void **);
-
-int get_expression(int exp_id, int * out) {{
-{expression_code}
-
-#line {line_no} "mbed_test.function"
-    {{
-        return 0;
-    }}
-}}
+#line {line_no} "suites/mbed_test.function"
 
 
 /*----------------------------------------------------------------------------*/
@@ -67,32 +50,65 @@ int get_expression(int exp_id, int * out) {{
 /*----------------------------------------------------------------------------*/
 /* Test Case code */
 
+{function_headers}
+
 {functions_code}
 
-#line {line_no} "mbed_test.function"
+#line {line_no} "suites/mbed_test.function"
 
 
 /*----------------------------------------------------------------------------*/
 /* Test dispatch code */
 
-int dep_check( int dep_id )
-{{
+
+int get_expression(int exp_id, int * out) {{
+{expression_code}
+
+#line {line_no} "suites/mbed_test.function"
+    {{
+        return 1;
+    }}
+    return 0;
+}}
+
+int dep_check( int dep_id ) {{
 {dep_check_code}
-#line {line_no} "mbed_test.function"
+#line {line_no} "suites/mbed_test.function"
     {{
          return( DEPENDENCY_NOT_SUPPORTED );
     }}
 }}
 
+typedef void (*TestWrapper_t)(void **);
+
 TestWrapper_t test_funcs[] = {{
 {dispatch_code} 
-#line {line_no} "mbed_test.function"
+#line {line_no} "suites/mbed_test.function"
 }};
+
+
+int dispatch_test(int func_idx, void ** params){{
+    int ret = DISPATCH_TEST_SUCCESS;
+    TestWrapper_t fp = NULL;
+
+    if (func_idx < (int)(sizeof(test_funcs)/sizeof(TestWrapper_t))) {{
+        fp = test_funcs[func_idx];
+        if (fp) {{
+            fp(params);
+        }} else {{
+            ret = DISPATCH_UNSUPPORTED_SUITE;
+        }}
+    }} else {{
+        ret = DISPATCH_TEST_FN_NOT_FOUND;
+    }}
+
+    return ret;
+}}
 
 
 {platform_code}
 
-#line {line_no} "mbed_test.function"
+#line {line_no} "suites/mbed_test.function"
 
 /*----------------------------------------------------------------------------*/
 /* Main Test code */
