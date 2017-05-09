@@ -33,7 +33,7 @@ if ( defined($switch) && ( $switch eq "-v" || $switch eq "--verbose" ) ) {
     $verbose = TRUE;
 }
 
-my @suites = grep { ! /\.(?:c|gcno|gcda|dSYM)$/ } glob 'test_suite_*';
+my @suites = grep { ! /\.(?:c|data|gcno|gcda|dSYM)$/ } glob 'test_suite_*';
 die "$0: no test suite found\n" unless @suites;
 
 # in case test suites are linked dynamically
