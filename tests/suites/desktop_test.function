@@ -1,5 +1,4 @@
-/*----------------------------------------------------------------------------*/
-/* Test dispatch code */
+#line 2 "suites/desktop_test.function"
 
 int verify_string( char **str )
 {
@@ -58,8 +57,6 @@ int verify_int( char *str, int *value )
         return( 0 );
     }
 
-MAPPING_CODE
-
     mbedtls_fprintf( stderr,
                     "Expected integer for parameter and got: %s\n", str );
     return( KEY_VALUE_MAPPING_NOT_FOUND );
@@ -82,15 +79,36 @@ MAPPING_CODE
 int get_line( FILE *f, char *buf, size_t len )
 {
     char *ret;
+    int i = 0, str_len = 0, has_string = 0;
 
-    ret = fgets( buf, len, f );
-    if( ret == NULL )
-        return( -1 );
+    /* Read until we get a non blank line */
+    while (1) {
+        ret = fgets( buf, len, f );
+        str_len = strlen(buf);
+        if( ret == NULL )
+            return( -1 );
 
-    if( strlen( buf ) && buf[strlen(buf) - 1] == '\n' )
-        buf[strlen(buf) - 1] = '\0';
-    if( strlen( buf ) && buf[strlen(buf) - 1] == '\r' )
-        buf[strlen(buf) - 1] = '\0';
+        /* Strip new line and carriage return */
+        if (str_len && (buf[str_len - 1] == '\n' || buf[str_len - 1] == '\r')){
+            str_len--;
+            buf[str_len] = '\0';
+        }
+        if (str_len == 0){ /* Skip empty line */
+            continue;
+        }
+        has_string = 0;
+        for (i = 0; i < str_len; i++){
+            char c = buf[i];
+            if (c != ' ' && c != '\t' && c != '\n' && c != '\v' && c != '\f' && c != '\r'){
+                has_string = 1;
+                break;
+            }
+        }
+        if (has_string) {
+            //printf ("line = %s\n", buf);
+            return 0;
+        }
+    }
 
     return( 0 );
 }
@@ -156,6 +174,54 @@ int parse_arguments( char *buf, size_t len, char *params[50] )
     return( cnt );
 }
 
+int convert_params(size_t cnt, char ** params, int * int_params_store) {
+    char ** cur = params;
+    char ** out = params;
+    int ret = DISPATCH_TEST_SUCCESS;
+
+    while (cur - params < (int)cnt){
+        char * type = *cur++;
+        char * val = *cur++;
+
+        if (strcmp(type, "char*") == 0){
+            if (verify_string(&val) == 0){
+              *out++ = val;
+            } else {
+                ret = DISPATCH_INVALID_TEST_DATA;
+                break;
+            }
+        } else if (strcmp(type, "int") == 0){
+            if (verify_int(val, int_params_store) == 0) {
+              *out++ = (char *)int_params_store++;
+            } else {
+                ret = DISPATCH_INVALID_TEST_DATA;
+                break;
+            }
+        } else if (strcmp(type, "hex") == 0){
+            *int_params_store = unhexify((unsigned char *)val, val);
+            *out++ = (char *)int_params_store++;
+            *out++ = val;
+        } else if (strcmp(type, "exp") == 0){
+            int exp_id = strtol(val, NULL, 10);
+            if (get_expression(exp_id, int_params_store) == 0){
+              *out++ = (char *)int_params_store++;
+            } else {
+              ret = DISPATCH_INVALID_TEST_DATA;
+              break;
+            }
+        } else {
+          ret = DISPATCH_INVALID_TEST_DATA;
+          break;
+        }
+    /*
+    for (int i = 0; i < cnt/2; i++){
+        printf("(%d) %s     ",  *((int *)params[i]), params[i]);
+    } printf("\n");
+    */
+    }
+    return ret;
+}
+
 static int test_snprintf( size_t n, const char ref_buf[10], int ref_ret )
 {
     int ret;
@@ -187,9 +253,9 @@ static int run_test_snprintf( void )
 }
 
 
-void execute_tests(int argc, char ** argv) {{
+int execute_tests(int argc, const char ** argv) {
     /* Local Configurations and options */
-    const char *default_filename = "{{data_file}}";
+    const char *default_filename = "DATA_FILE";
     const char *test_filename = NULL;
     const char **test_files = NULL;
     int testfile_count = 0;
@@ -203,6 +269,7 @@ void execute_tests(int argc, char ** argv) {{
     FILE *file;
     char buf[5000];
     char *params[50];
+    int int_params[50]; // Store proccessed integers params here.
     void *pointer;
 #if defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))
     int stdout_fd = -1;
@@ -316,7 +383,8 @@ void execute_tests(int argc, char ** argv) {{
             {
                 for( i = 1; i < cnt; i++ )
                 {
-                    if( dep_check( params[i] ) != DEPENDENCY_SUPPORTED )
+                    int dep_id = strtol(params[i], NULL, 10);
+                    if( dep_check( dep_id ) != DEPENDENCY_SUPPORTED )
                     {
                         if( 0 == option_verbose )
                         {
@@ -360,7 +428,11 @@ void execute_tests(int argc, char ** argv) {{
                 }
 #endif /* __unix__ || __APPLE__ __MACH__ */
 
-                ret = dispatch_test( cnt, params );
+                ret = convert_params(cnt - 1, params + 1, int_params);
+                if (DISPATCH_TEST_SUCCESS == ret){
+                    int function_id = strtol(params[0], NULL, 10);
+                    ret = dispatch_test( function_id, (void **)(params + 1) );
+                }
 
 #if defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))
                 if( !option_verbose && restore_output( &stdout, stdout_fd ) )
@@ -408,17 +480,14 @@ void execute_tests(int argc, char ** argv) {{
                 fclose(file);
                 mbedtls_exit( 2 );
             }
+            else if( ret == DISPATCH_TEST_FN_NOT_FOUND )
+            {
+                mbedtls_fprintf( stderr, "FAILED: FATAL TEST FUNCTION NOT FUND\n" );
+                fclose(file);
+                mbedtls_exit( 2 );
+            }
             else
                 total_errors++;
-
-            if( ( ret = get_line( file, buf, sizeof(buf) ) ) != 0 )
-                break;
-            if( strlen(buf) != 0 )
-            {
-                mbedtls_fprintf( stderr, "Should be empty %d\n",
-                                 (int) strlen(buf) );
-                return( 1 );
-            }
         }
         fclose(file);
 
@@ -450,4 +519,5 @@ void execute_tests(int argc, char ** argv) {{
 #endif /* __unix__ || __APPLE__ __MACH__ */
 
     // replace it - return( total_errors != 0 );
-}}
+    return total_errors != 0;
+}
