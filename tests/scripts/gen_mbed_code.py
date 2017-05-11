@@ -104,7 +104,6 @@ def gen_function_wrapper(name, args_dispatch):
     """
     # Then create the wrapper
     wrapper = '''
-#line default
 void {name}_wrapper( void ** params )
 {{
     {unused_params}
@@ -423,7 +422,7 @@ def gen_expression_check(exp_id, exp):
     exp_code = '''
 if ( exp_id == {exp_id} )
 {{
-    *out = {expression};
+    *out_value = {expression};
 }}
 else
 '''.format(exp_id=exp_id, expression=exp)
@@ -486,7 +485,7 @@ def gen_from_test_data(data_f, out_data_f, func_info):
         dep_check_code = '(void) dep_id;\n'
     if len(expression_code) == 0:
         expression_code = '(void) exp_id;\n'
-        expression_code += '(void) out;\n'
+        expression_code += '(void) out_value;\n'
 
     return dep_check_code, expression_code
 
@@ -514,7 +513,7 @@ def gen_mbed_code(funcs_file, data_file, template_file, platform_file, help_file
         if not os.path.exists(path):
             raise IOError("ERROR: %s [%s] not found!" % (name, path))
 
-    snippets = {}
+    snippets = {'generator_script' : os.path.basename(__file__)}
 
     # Read helpers
     with open(help_file, 'r') as help_f, open(platform_file, 'r') as platform_f:

@@ -69,7 +69,6 @@
  */
 int get_expression( int exp_id, int * out_value )
 {{
-#line default
 {expression_code}
 #line {line_no} "suites/mbed_test.function"
     {{
@@ -92,7 +91,6 @@ int get_expression( int exp_id, int * out_value )
  */
 int dep_check( int dep_id )
 {{
-#line default
 {dep_check_code}
 #line {line_no} "suites/mbed_test.function"
     {{
@@ -121,7 +119,6 @@ typedef void (*TestWrapper_t)( void ** );
  */
 TestWrapper_t test_funcs[] =
 {{
-#line default
 {dispatch_code} 
 #line {line_no} "suites/mbed_test.function"
 }};
