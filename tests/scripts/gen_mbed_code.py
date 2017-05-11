@@ -1,4 +1,19 @@
+"""
+mbed SDK
+Copyright (c) 2017-2018 ARM Limited
 
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+"""
 
 import os
 import re
@@ -43,7 +58,8 @@ class InvalidFileFormat(Exception):
 
 def gen_deps(deps):
     """
-    Generates depedency i.e. if def and endif code
+    Generates dependency i.e. if def and endif code
+
     :param deps:
     :return:
     """
@@ -55,13 +71,15 @@ def gen_deps(deps):
             dep = dep[1:]
         else:
             noT = ''
-        dep_start += '#if %sdefined %s\n' % (noT, dep)
-        dep_end = '#endif /* %s */\n' % dep + dep_end
+        dep_start += '#if %sdefined(%s)\n' % (noT, dep)
+        dep_end = '#endif /* %s%s */\n' % (noT, dep) + dep_end
     return dep_start, dep_end
 
 
 def gen_deps_one_line(deps):
     """
+    Generates dependency checks in one line. Useful for writing code in #else case.
+
     :param deps:
     :return:
     """
@@ -72,7 +90,7 @@ def gen_deps_one_line(deps):
             dep = dep[1:]
         else:
             noT = ''
-        defines.append('%sdefined (%s)' % (noT, dep))
+        defines.append('%sdefined(%s)' % (noT, dep))
     return '#if ' + ' && '.join(defines)
 
 
@@ -87,9 +105,10 @@ def gen_function_wrapper(name, args_dispatch):
     # Then create the wrapper
     wrapper = '''
 #line default
-void {name}_wrapper(void ** params){{
+void {name}_wrapper( void ** params )
+{{
     {unused_params}
-    {name}({args});
+    {name}( {args} );
 }}
 '''.format(name=name, unused_params='(void)params;' if len(args_dispatch) == 0 else '', args=', '.join(args_dispatch))
     return wrapper
@@ -199,10 +218,10 @@ def parse_function_signature(line):
             continue
         if re.search('int\s+.*', arg.strip()):
             args.append('int')
-            args_dispatch.append('*((int *)params[%d])' % arg_idx)
+            args_dispatch.append('*( (int *) params[%d] )' % arg_idx)
         elif re.search('char\s*\*\s*.*', arg.strip()):
             args.append('char*')
-            args_dispatch.append('(char *)params[%d]' % arg_idx)
+            args_dispatch.append('(char *) params[%d]' % arg_idx)
         else:
             raise ValueError("Test function arguments can only be 'int' or 'char *'\n%s" % line)
         arg_idx += 1
@@ -268,7 +287,7 @@ def parse_functions(funcs_f):
     Returns functions code pieces
     
     :param funcs_f: 
-    :return: 
+    :return:
     """
     line_no = 0
     suite_headers = ''
@@ -304,6 +323,11 @@ def parse_functions(funcs_f):
 
 def escaped_split(str, ch):
     """
+    Split str on character ch but ignore escaped \{ch}
+
+    :param str:
+    :param ch:
+    :return:
     """
     if len(ch) > 1:
         raise ValueError('Expected split character. Found string!')
@@ -374,13 +398,15 @@ def gen_dep_check(dep_id, dep):
     else:
         noT = ''
     dep_check = '''
-if (dep_id == {id}) {{
-#if {noT}defined ({macro})
-    return DEPENDENCY_SUPPORTED;
+if ( dep_id == {id} )
+{{
+#if {noT}defined({macro})
+    return( DEPENDENCY_SUPPORTED );
 #else
-    return DEPENDENCY_NOT_SUPPORTED;
+    return( DEPENDENCY_NOT_SUPPORTED );
 #endif
-}} else
+}}
+else
 '''.format(noT=noT, macro=dep, id=dep_id)
 
     return dep_check
@@ -395,9 +421,11 @@ def gen_expression_check(exp_id, exp):
     :return: 
     """
     exp_code = '''
-if (exp_id == {exp_id}) {{
+if ( exp_id == {exp_id} )
+{{
     *out = {expression};
-}} else
+}}
+else
 '''.format(exp_id=exp_id, expression=exp)
     return exp_code
 
@@ -455,10 +483,10 @@ def gen_from_test_data(data_f, out_data_f, func_info):
 
     # void unused params
     if len(dep_check_code) == 0:
-        dep_check_code = '(void)dep_id;\n'
+        dep_check_code = '(void) dep_id;\n'
     if len(expression_code) == 0:
-        expression_code = '(void)exp_id;\n'
-        expression_code += '(void)out;\n'
+        expression_code = '(void) exp_id;\n'
+        expression_code += '(void) out;\n'
 
     return dep_check_code, expression_code
 
@@ -574,13 +602,8 @@ def check_cmd():
 
     args = parser.parse_args()
 
-    # FIXME since we are working out some paths. better revisit command line arguments
     data_file_name = os.path.basename(args.data_file)
     data_name = os.path.splitext(data_file_name)[0]
-
-    # Move mbed specific deployment in a separate script
-    #out_c_file = os.path.join(args.out_dir, 'mbedtls', data_name, 'main.c')
-    #out_data_file = os.path.join(args.out_dir, 'host_tests', 'suites', data_file_name)
 
     out_c_file = os.path.join(args.out_dir, data_name + '.c')
     out_data_file = os.path.join(args.out_dir, data_file_name)

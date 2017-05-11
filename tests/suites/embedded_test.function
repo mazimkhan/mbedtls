@@ -1,125 +1,197 @@
-void free_params(void ** params){{
+#line 2 "embedded_test.function"
+
+
+/**
+ * \brief       Frees the parameters memory allocated by receive_parameters()
+ *
+ * \param params    Array of parameters
+ *
+ * \return          void
+ */
+void free_params( void ** params )
+{{
     void ** p = params;
-    while(*p){{
-        free(*p);
+    while( *p )
+    {{
+        free( *p );
         p++;
     }}
-    free(params);
+    free( params );
 }}
 
-void ** serial_parse_arguments() {{
-    int ret, num_args, int_val;
+/**
+ * \brief       Receives test data on serial and processes it for execution.
+ *
+ * \param none
+ *
+ * \return      Array of parameters. NULL on failure.
+ */
+void ** receive_parameters()
+{{
+    int i, ret, num_args, int_val;
     char key[2];
     char val[10], num[10];
     void ** params = NULL;
 
     // Get no. of arguments
-    greentea_send_kv_c("SC", " ");
-    ret = greentea_parse_kv_c(key, val, sizeof(key), sizeof(val));
-    if (ret == 0) {{
-        // received eof while receiving data
-        // failed to parse arguments
-        return NULL;
+    greentea_send_kv_c( "SC", " " );
+    ret = greentea_parse_kv_c( key, val, sizeof( key ), sizeof( val ) );
+    if ( ret == 0 )
+    {{
+        /* received eof while receiving data
+           failed to parse arguments */
+        return( NULL );
     }}
     // Covert number of param string to int
-    num_args = atoi(val);
+    num_args = atoi( val );
 
     // allocate params array based on num arguments
-    params = (void **)malloc(sizeof(void *) * (num_args + 1));
-    for (int i = 0; i < (num_args + 1); i++){{
+    params = (void **) malloc( sizeof( void * ) * ( num_args + 1 ) );
+    for ( i = 0; i < ( num_args + 1 ); i++ )
+    {{
         params[i] = NULL;
     }}
 
-    for (int i = 0; i < num_args; i++){{
-        snprintf(num, sizeof(num), "%d", i);
-        printf ("Requesting param %s\r\n", num);
-        greentea_send_kv_c("SP", num);
-        ret = greentea_parse_kv_c(key, val, sizeof(key), sizeof(val));
-        if (ret == 0) {{
-            free_params(params);
-            return NULL;
+    for ( i = 0; i < num_args; i++ )
+    {{
+        snprintf( num, sizeof( num ), "%d", i );
+        greentea_send_kv_c( "SP", num );
+        ret = greentea_parse_kv_c( key, val, sizeof( key ), sizeof( val ) );
+        if ( ret == 0 )
+        {{
+            free_params( params );
+            return( NULL );
         }}
 
-        int_val = atoi(val);
-        printf ("Got argument type %s of len %d\r\n", key, int_val);
+        int_val = atoi( val );
 
-        switch(key[0]){{
-            case 'I': {{
-                          // convert val into integer and store in the array
-                          params[i] = malloc(sizeof(int));
-                          *((int *)params[i]) = int_val;
-                      }}
-                      break;
-            case 'S':
-            case 'H': {{
-                          params[i] = malloc(int_val + 1);
-                          if (int_val > 0){{
-                              // receive hex/string
-                              greentea_send_kv_c("D", num);
-                              ret = greentea_parse_kv_c(key, (char *)params[i], sizeof(key), int_val + 1);
-                          }}
-                          ((char *)params[i])[int_val] = 0; // Null terminate special for 0 len strings
-                      }}
-                      break;
-            case 'E': {{
-                          params[i] = malloc(sizeof(int));
-                          assert (get_expression(int_val, (int *)params[i]) == 0);
-                      }}
-                      break;
-            default: {{
-                         // Wrong type received
-                         free_params(params);
-                         return NULL;
-                     }}
-                     break;
-        }}
+        switch( key[0] )
+        {{
+             case 'I':
+                 {{
+                      /* convert val into integer and store in the array */
+                      params[i] = malloc( sizeof( int ) );
+                      *( (int *) params[i] ) = int_val;
+                 }}
+                 break;
+             case 'S':
+             case 'H':
+                 {{
+                      if ( int_val > 0 )
+                      {{
+                           params[i] = malloc( int_val + 1 );
+                           /* receive hex/string */
+                           greentea_send_kv_c( "D", num );
+                           ret = greentea_parse_kv_c( key,
+                                   (char *)params[i],
+                                   sizeof( key ),
+                                   int_val + 1 );
+                       }}
+                       else if (int_val == 0 )
+                       {{
+                            /* Null terminate empty strings */
+                            ( (char *) params[i] )[int_val] = 0;
+                       }}
+                       else
+                       {{
+                            /* Invalid length for hex data */
+                            free_params( params );
+                            return( NULL );
+                       }}
+                 }}
+                 break;
+             case 'E':
+                 {{
+                      params[i] = malloc( sizeof( int ) );
+                      assert ( get_expression( int_val, (int *) params[i] ) == 0 );
+                 }}
+                 break;
+             default:
+                 {{
+                      /* Wrong type received */
+                      free_params( params );
+                      return( NULL );
+                 }}
+                 break;
+         }}
     }}
-    return params;
+    return( params );
 }}
 
 
-void execute_tests(int argc, char ** argv) {{
+/**
+ * \brief       Embedded implementation of execute_tests().
+ *              Ignores command line and received test data
+ *              on serial.
+ *
+ * \param argc  not used
+ * \param argv  not used
+ *
+ * \return      Program exit status.
+ */
+int execute_tests( int argc, char ** argv )
+{{
     char key[50];
     char val[100];
 
-    GREENTEA_SETUP_C(180, "mbedtls_test");
-    greentea_send_kv_c("GO", " ");
+    GREENTEA_SETUP_C( 180, "mbedtls_test" );
+    greentea_send_kv_c( "GO", " " );
 
-    while (1) {{
+    while ( 1 )
+    {{
         test_errors = 0;
-        if (greentea_parse_kv_c(key, val, sizeof(key), sizeof(val))) {{
-            if (strcmp(key, "CD") == 0) {{
-                if (dep_check(atoi(val)) == DEPENDENCY_SUPPORTED) {{
-                    greentea_send_kv_c("CD", "1");
-                    continue; // Skip sending go as that changes to next test. Spec: CD==1 should follow CD or T
-                }} else {{
+        if ( greentea_parse_kv_c( key, val, sizeof( key ), sizeof( val ) ) )
+        {{
+            if ( strcmp( key, "CD" ) == 0)
+            {{
+                if ( dep_check( atoi( val ) ) == DEPENDENCY_SUPPORTED )
+                {{
+                    greentea_send_kv_c( "CD", "1" );
+                    /* Skip sending go as that changes to next test.
+                       Spec: CD==1 should follow CD or T */
+                    continue;
+                }} else
+                {{
                     test_errors = MBEDTLS_TEST_ERROR_DEPENDENCY_NOT_SUPPORTED;
                 }}
-            }} else if (strcmp(key, "T") == 0) {{
+            }} else if ( strcmp( key, "T" ) == 0 )
+            {{
                 TestWrapper_t fp = NULL;
-                int func_idx = atoi(val);
-                if (func_idx < sizeof(test_funcs)/sizeof(TestWrapper_t)) {{
+                int func_idx = atoi( val );
+                if ( func_idx < sizeof( test_funcs ) / sizeof( TestWrapper_t ) )
+                {{
                     fp = test_funcs[func_idx];
                 }}
-                if (fp) {{
-                    void ** params = serial_parse_arguments();
-                    if (params) {{
-                        greentea_send_kv_c("ST", " ");
-                        fp(params);
-                        free_params(params);
-                    }} else {{
+                if ( fp )
+                {{
+                    void ** params = receive_parameters();
+                    if ( params ) {{
+                        greentea_send_kv_c( "ST", " " );
+                        fp( params );
+                        free_params( params );
+                    }}
+                    else
+                    {{
                         test_errors = MBEDTLS_TEST_ERROR_GT_PARSE_ERROR;
                     }}
-                }} else {{
+                }}
+                else
+                {{
                     test_errors = MBEDTLS_TEST_ERROR_FUNC_NOT_FOUND;
                 }}
-            }} else {{
+            }}
+            else
+            {{
                 test_errors = MBEDTLS_TEST_ERROR_GT_PARSE_ERROR;
             }}
-        }} else {{
+        }}
+        else
+        {{
             test_errors = MBEDTLS_TEST_ERROR_GT_PARSE_ERROR;
         }}
-        snprintf(val, sizeof(val), "%d", test_errors); // TBD: htonl 
-        greentea_send_kv_c("R", val);
+        snprintf( val, sizeof( val ), "%d", test_errors );
+        greentea_send_kv_c( "R", val );
     }}
+    return( 0 );
 }}
+
