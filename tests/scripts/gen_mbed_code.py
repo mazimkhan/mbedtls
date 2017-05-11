@@ -86,6 +86,7 @@ def gen_function_wrapper(name, args_dispatch):
     """
     # Then create the wrapper
     wrapper = '''
+#line default
 void {name}_wrapper(void ** params){{
     {unused_params}
     {name}({args});
