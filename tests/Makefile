@@ -205,14 +205,15 @@ MBED_APPS := $(addprefix mbed_,$(APPS))
 # name is used as the test group dir.
 
 .SECONDEXPANSION:
-$(MBED_APPS): mbed_%: suites/$$(func.$$*).function suites/%.data scripts/gen_mbed_code.py suites/helpers.function suites/main_test.function
-	echo "  Gen  ./TESTS/mbedtls/$*/main.c"
+$(MBED_APPS): mbed_%: suites/$$(func.$$*).function suites/%.data scripts/gen_mbed_code.py suites/helpers.function suites/mbed_test.function suites/embedded_test.function
+	echo "  Gen  ./TESTS/mbedtls/$*/$*.c"
 	python scripts/gen_mbed_code.py -f suites/$(func.$*).function \
 		-d suites/$*.data \
 		-t suites/mbed_test.function \
+		-p suites/embedded_test.function \
 		-s suites  \
 		--help-file suites/helpers.function \
-		-o ./TESTS
+		-o ./TESTS/mbedtls/$*
 
 gen-mbed-test: $(MBED_APPS)
 
