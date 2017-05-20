@@ -90,13 +90,13 @@ class TestDataParser(object):
             line = file.readline().strip()
             m = re.search('depends_on\:(.*)', line)
             if m:
-                deps = m.group(1).split(':')
+                deps = [int(x) for x in m.group(1).split(':')]
                 line = file.readline().strip()
 
             # Read test vectors
             line = line.replace('\\n', '\n#')
             parts = self.__escaped_split(line, ':')
-            function = parts[0]
+            function = int(parts[0])
             x = parts[1:]
             l = len(x)
             assert l % 2 == 0, "Number of test arguments should be even: %s" % line
@@ -114,9 +114,16 @@ class MbedTlsTest(BaseHostTest):
     """
     Host test for mbed-tls target tests.
     """
-    MBEDTLS_TEST_ERROR_FUNC_NOT_FOUND               = 0xf100
-    MBEDTLS_TEST_ERROR_DEPENDENCY_NOT_SUPPORTED     = 0xf200
-    MBEDTLS_TEST_ERROR_GT_PARSE_ERROR               = 0xf400
+    # From suites/helpers.function
+    DEPENDENCY_SUPPORTED = 0
+    KEY_VALUE_MAPPING_FOUND = DEPENDENCY_SUPPORTED
+    DISPATCH_TEST_SUCCESS = DEPENDENCY_SUPPORTED
+
+    KEY_VALUE_MAPPING_NOT_FOUND = -1
+    DEPENDENCY_NOT_SUPPORTED = -2
+    DISPATCH_TEST_FN_NOT_FOUND = -3
+    DISPATCH_INVALID_TEST_DATA = -4
+    DISPATCH_UNSUPPORTED_SUITE = -5
 
     def __init__(self):
         """
@@ -125,6 +132,13 @@ class MbedTlsTest(BaseHostTest):
         self.tests = []
         self.test_index = -1
         self.dep_index = 0
+        self.error_str = dict()
+        self.error_str[self.DEPENDENCY_SUPPORTED] = 'DEPENDENCY_SUPPORTED'
+        self.error_str[self.KEY_VALUE_MAPPING_NOT_FOUND] = 'KEY_VALUE_MAPPING_NOT_FOUND'
+        self.error_str[self.DEPENDENCY_NOT_SUPPORTED] = 'DEPENDENCY_NOT_SUPPORTED'
+        self.error_str[self.DISPATCH_TEST_FN_NOT_FOUND] = 'DISPATCH_TEST_FN_NOT_FOUND'
+        self.error_str[self.DISPATCH_INVALID_TEST_DATA] = 'DISPATCH_INVALID_TEST_DATA'
+        self.error_str[self.DISPATCH_UNSUPPORTED_SUITE] = 'DISPATCH_UNSUPPORTED_SUITE'
 
     def setup(self):
         """
@@ -151,6 +165,32 @@ class MbedTlsTest(BaseHostTest):
         for name, _, _, _ in self.tests:
             self.log('{{__testcase_name;%s}}' % name)
 
+    @staticmethod
+    def align_32bit(b):
+        """
+        4 byte aligns byte array.
+
+        :return:
+        """
+        b += bytearray((4 - (len(b))) % 4)
+
+    def parameters_to_bytes(self, b, parameters):
+        for typ, param in parameters:
+            if typ == 'int' or typ == 'exp':
+                i = int(param)
+                b += 'I' if typ == 'int' else 'E'
+                self.align_32bit(b)
+                b += bytearray([((i >> x) & 0xff) for x in [24, 16, 8, 0]])
+            elif typ == 'char*':
+                param = param.strip('"')
+                i = len(param) + 1  # + 1 for null termination
+                b += 'S'
+                self.align_32bit(b)
+                b += bytearray([((i >> x) & 0xff) for x in [24, 16, 8, 0]])
+                b += bytearray(list(param))
+                b += '\0'   # Null terminate
+        return b
+
     def run_next_test(self):
         """
         Send next test function to the target.
@@ -160,32 +200,17 @@ class MbedTlsTest(BaseHostTest):
         self.dep_index = 0
         if self.test_index < len(self.tests):
             name, function, deps, args = self.tests[self.test_index]
+            self.log("Running: %s" % name)
+            bytes = bytearray([len(deps)])
             if len(deps):
-                dep = deps[self.dep_index]
-                self.send_kv('CD', dep)
-                self.dep_index += 1
-            else:
-                self.send_kv("T", function)
+                bytes += bytearray(deps)
+            bytes += bytearray([function, len(args)])
+            self.parameters_to_bytes(bytes, args)
+            key = bytearray([((len(bytes) >> x) & 0xff) for x in [24, 16, 8, 0]])
+            #self.log("Bytes: " + " ".join(["%x '%c'" % (x, x) for x in bytes]))
+            self.send_kv(key, bytes)
         else:
             self.notify_complete(True)
-
-    def get_test_name(self):
-        """
-        Gives test name
-        """
-        if self.test_index < len(self.tests):
-            name = self.tests[self.test_index][0]
-            return name
-        return None
-
-    def get_test_func(self):
-        """
-        Gives test function name
-        """
-        if self.test_index < len(self.tests):
-            name = self.tests[self.test_index][1]
-            return name
-        return None
 
     @staticmethod
     def get_result(value):
@@ -199,50 +224,6 @@ class MbedTlsTest(BaseHostTest):
     def on_go(self, key, value, timestamp):
         self.run_next_test()
 
-    @event_callback('CD')
-    def on_dep_check(self, key, value, timestamp):
-        name, function, deps, args = self.tests[self.test_index]
-        assert value == "1", "Check dependency received value should be 1"
-        if self.dep_index < len(deps):
-            dep = deps[self.dep_index]
-            self.send_kv('CD', dep)
-            self.dep_index += 1
-        else:
-            self.send_kv("T", function)
-
-    @event_callback('SC')
-    def on_send_count(self, key, value, timestamp):
-        name, function, deps, args = self.tests[self.test_index]
-        self.send_kv("N", len(args))
-
-    @event_callback('SP')
-    def on_send_param(self, key, value, timestamp):
-        i = int(value)
-        name, function, deps, args = self.tests[self.test_index]
-        typ, arg = args[i]
-        if typ == 'int':
-            self.send_kv("I", arg)
-        elif typ == 'exp':
-            self.send_kv("E", arg)
-        elif typ == 'char*':
-            self.send_kv("S", str(len(arg.strip('"'))))
-        else:
-            raise ValueError("Invalid type '%s'" % typ)
-
-    @event_callback('D')
-    def on_send_data(self, key, value, timestamp):
-        i = int(value)
-        name, function, deps, args = self.tests[self.test_index]
-        typ, arg = args[i]
-        self.send_kv('D', arg.strip('"'))
-
-    @event_callback("ST")
-    def on_start_test(self, key, value, timestamp):
-        """
-        """
-        name, function, deps, args = self.tests[self.test_index]
-        self.log('{{__testcase_start;%s}}' % name)
-
     @event_callback("R")
     def on_result(self, key, value, timestamp):
         """
@@ -251,14 +232,26 @@ class MbedTlsTest(BaseHostTest):
         """
         int_val = self.get_result(value)
         name, function, deps, args = self.tests[self.test_index]
-        if int_val == 0:
-            self.log('{{__testcase_finish;%s;%d;%d}}' % (name, 1, 0))
-        elif int_val == self.MBEDTLS_TEST_ERROR_DEPENDENCY_NOT_SUPPORTED:
-            self.log("Dependency not supported for test: %s" % name)
-        elif int_val == self.MBEDTLS_TEST_ERROR_FUNC_NOT_FOUND:
-            self.log("Test functions not supported for test %s" % name)
-        elif int_val == self.MBEDTLS_TEST_ERROR_GT_PARSE_ERROR:
-            self.log("Greentea parsing error in test %s" % name)
+        self.log('{{__testcase_finish;%s;%d;%d}}' % (name, int_val == 0,
+                                                     int_val != 0))
+        self.run_next_test()
+
+    @event_callback("F")
+    def on_failure(self, key, value, timestamp):
+        """
+        Handles test execution failure. Hence marking test as skipped.
+
+        :param key:
+        :param value:
+        :param timestamp:
+        :return:
+        """
+        int_val = self.get_result(value)
+        name, function, deps, args = self.tests[self.test_index]
+        if int_val in self.error_str:
+            err = self.error_str[int_val]
         else:
-            self.log('{{__testcase_finish;%s;%d;%d}}' % (name, 0, 1))
+            err = 'Unknown error'
+        # For skip status, do not write {{__testcase_finish;...}}
+        self.log("Error: %s" % err)
         self.run_next_test()
