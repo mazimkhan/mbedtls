@@ -40,20 +40,6 @@ class TestDataParser(object):
             self.__parse(f)
 
     @staticmethod
-    def __readline(fd):
-        """
-        Reads a full line.
-        """
-        ret = ''
-        line = fd.readline(1024)
-        while line:
-            ret += line
-            if line[-1] != '\n':
-                break
-            line = fd.readline(1024)
-        return ret
-
-    @staticmethod
     def __escaped_split(str, ch):
         """
         """
