@@ -25,10 +25,6 @@
 #include MBEDTLS_CONFIG_FILE
 #endif
 
-#define MBEDTLS_TEST_ERROR_FUNC_NOT_FOUND               0xf100
-#define MBEDTLS_TEST_ERROR_DEPENDENCY_NOT_SUPPORTED     0xf200
-#define MBEDTLS_TEST_ERROR_GT_PARSE_ERROR               0xf400
-
 
 /*----------------------------------------------------------------------------*/
 /* Common helper code */
@@ -72,9 +68,9 @@ int get_expression( int32_t exp_id, int32_t * out_value )
 {expression_code}
 #line {line_no} "suites/mbed_test.function"
     {{
-        return( 1 );
+        return( KEY_VALUE_MAPPING_NOT_FOUND );
     }}
-    return( 0 );
+    return( KEY_VALUE_MAPPING_FOUND );
 }}
 
 

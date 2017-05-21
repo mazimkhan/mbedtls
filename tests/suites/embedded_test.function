@@ -2,15 +2,35 @@
 
 #include "greentea-client/test_env_c.h"
 
+/**
+ * \brief       Increments pointer and asserts that it does not overflow.
+ *
+ * \param p     Pointer to byte array
+ * \param start Pointer to start of byte array
+ * \param len   Length of byte array
+ * \param step  Increment size
+ *
+ */
 #define INCR_ASSERT(p, start, len, step) do                     \
 {                                                               \
     assert( p >= start );                                       \
     assert( sizeof( *p ) == sizeof( *start ) );                 \
+    /* <= is checked to support use inside a loop where         \
+       pointer is incremented after reading data.       */      \
     assert( (uint32_t)( (p - start) + step ) <= len );          \
     p += step;                                                  \
 }                                                               \
 while( 0 )
 
+
+/**
+ * \brief       4 byte align unsigned char pointer
+ *
+ * \param p     Pointer to byte array
+ * \param start Pointer to start of byte array
+ * \param len   Length of byte array
+ *
+ */
 #define ALIGN_32BIT(p, start, len) do           \
 {                                               \
     uint32_t align = ( - (uintptr_t)p ) % 4;    \
@@ -20,11 +40,13 @@ while( 0 )
 
 
 /**
- * \brief       Frees the parameters memory allocated by receive_parameters()
+ * \brief       Verify dependencies. Dependency identifiers are
+ *              encoded in the buffer as 8 bit unsigned integers.
  *
- * \param params    Array of parameters
+ * \param count     Number of dependencies.
+ * \param dep_p     Pointer to buffer.
  *
- * \return          void
+ * \return          DEPENDENCY_SUPPORTED if success else DEPENDENCY_NOT_SUPPORTED.
  */
 int verify_dependencies( uint8_t count, uint8_t * dep_p )
 {
@@ -38,6 +60,14 @@ int verify_dependencies( uint8_t count, uint8_t * dep_p )
 }
 
 
+/**
+ * \brief       Receives unsigned integer on serial interface.
+ *              Integers are encoded in network order.
+ *
+ * \param none
+ *
+ * \return      unsigned int
+ */
 uint32_t receive_uint32()
 {
     uint32_t value;
@@ -48,6 +78,14 @@ uint32_t receive_uint32()
     return( (uint32_t)value );
 }
 
+/**
+ * \brief       Parses out an unsigned 32 int value from the byte array.
+ *              Integers are encoded in network order.
+ *
+ * \param p     Pointer to byte array
+ *
+ * \return      unsigned int
+ */
 uint32_t parse_uint32( uint8_t * p )
 {
     uint32_t value;
@@ -59,22 +97,13 @@ uint32_t parse_uint32( uint8_t * p )
 }
 
 
-void receive_bytes(uint8_t * buf, uint32_t len)
-{
-    uint32_t i;
-
-    for( i = 0; i < len; i++ )
-    {
-        buf[i] = greentea_getc();
-    }
-}
-
 /**
- * \brief       Receives test data on serial and processes it for execution.
+ * \brief       Receives test data on serial as greentea key,value pair:
+ *              {{<length>;<byte array>}}
  *
- * \param none
+ * \param data_len  Out pointer to hold received data length.
  *
- * \return      Array of parameters. NULL on failure.
+ * \return      Byte array.
  */
 uint8_t * receive_data( uint32_t * data_len )
 {
@@ -95,9 +124,10 @@ uint8_t * receive_data( uint32_t * data_len )
             return( NULL );
     }
 
-    /* Read number of params */
+    /* Read data length */
     *data_len = receive_uint32();
     data = (uint8_t *)malloc( *data_len );
+    assert( data != NULL );
 
     greentea_getc(); // read ';' received after key i.e. *data_len
 
@@ -126,13 +156,19 @@ uint8_t * receive_data( uint32_t * data_len )
 }
 
 /**
- * \brief       Receives test data on serial and processes it for execution.
+ * \brief       Parses received byte array for test parameters.
  *
- * \param none
+ * \param count     Parameter count
+ * \param data      Received Byte array
+ * \param data_len  Byte array length
+ * \param error     Parsing error out variable.
  *
- * \return      Array of parameters. NULL on failure.
+ * \return      Array of parsed parameters allocated on heap.
+ *              Note: Caller has the responsibility to delete
+ *                    the memory after use.
  */
-void ** parse_parameters( uint8_t count, uint8_t * data, uint32_t data_len, int * error )
+void ** parse_parameters( uint8_t count, uint8_t * data, uint32_t data_len,
+                            int * error )
 {
     uint32_t i = 0;
     char c;
@@ -140,7 +176,8 @@ void ** parse_parameters( uint8_t count, uint8_t * data, uint32_t data_len, int 
     void ** cur = NULL;
     uint8_t * p = NULL;
 
-    params = (void **)malloc( ( sizeof( void *) * count ) + 1 );
+    params = (void **)malloc( sizeof( void *) * ( count + 1 ) );
+    assert( params != NULL );
     params[count] = NULL;
     cur = params;
 
@@ -157,7 +194,6 @@ void ** parse_parameters( uint8_t count, uint8_t * data, uint32_t data_len, int 
 
         /* Network to host conversion */
         *( (int32_t *)p ) = (int32_t)parse_uint32( p );
-        //printf ("typ %c val %d\r\n", c, *( (int32_t *)p ) );
 
         switch( c )
         {
@@ -207,24 +243,39 @@ exit:
 }
 
 /**
- * \brief       Receives test data on serial and processes it for execution.
+ * \brief       Sends greentea key and int value pair to host.
  *
- * \param none
+ * \param key   key string
+ * \param value integer value
  *
- * \return      Array of parameters. NULL on failure.
+ * \return      void
  */
-void send_key_integer( char * key, int failure )
+void send_key_integer( char * key, int value )
 {
     char str[50];
-    snprintf( str, sizeof( str ), "%d", failure );
+    snprintf( str, sizeof( str ), "%d", value );
     greentea_send_kv_c( key, str );
 }
 
+/**
+ * \brief       Sends test setup failure to the host.
+ *
+ * \param failure   Test set failure
+ *
+ * \return      void
+ */
 void send_failure( int failure )
 {
     send_key_integer( "F", failure );
 }
 
+/**
+ * \brief       Sends test status to the host.
+ *
+ * \param status    Test status (PASS=0/FAIL=!0)
+ *
+ * \return      void
+ */
 void send_status( int status )
 {
     send_key_integer( "R", status );
@@ -257,6 +308,7 @@ int execute_tests( int args, const char ** argv )
         ret = 0;
         test_errors = 0;
         data_len = 0;
+
         data = receive_data( &data_len );
         if ( data == NULL )
             continue;
@@ -264,28 +316,29 @@ int execute_tests( int args, const char ** argv )
 
         do
         {
+            /* Read dependency count */
             count = *p;
-            INCR_ASSERT( p, data, data_len, 1 );
+            assert( count < data_len );
+            INCR_ASSERT( p, data, data_len, sizeof( uint8_t ) );
             ret = verify_dependencies( count, p );
             if ( ret != DEPENDENCY_SUPPORTED )
                 break;
 
-            p += count;
+            INCR_ASSERT( p, data, data_len, count );
 
+            /* Read function id */
             function_id = *p;
-            INCR_ASSERT( p, data, data_len, 1 );
+            INCR_ASSERT( p, data, data_len, sizeof( uint8_t ) );
 
-            /* Number of parameters */
+            /* Read number of parameters */
             count = *p;
-            INCR_ASSERT( p, data, data_len, 1 );
+            INCR_ASSERT( p, data, data_len, sizeof( uint8_t ) );
 
             params = parse_parameters( count, p, data_len - (p - data), &ret );
             if ( ret )
                 break;
 
-            printf("before dispatch_test\r\n");
             ret = dispatch_test( function_id, params );
-            printf("after dispatch_test\r\n");
         }
         while ( 0 );
 
@@ -308,6 +361,4 @@ int execute_tests( int args, const char ** argv )
     }
     return( 0 );
 }
-
-
 
