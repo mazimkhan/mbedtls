@@ -8,8 +8,7 @@
  */
 
 /* BEGIN_CASE */
-void dhm_do_dhm( int radix_P, char *input_P,
-                 int radix_G, char *input_G )
+void dhm_do_dhm( int radix_P, char * input_P, int radix_G, char * input_G )
 {
     mbedtls_dhm_context ctx_srv;
     mbedtls_dhm_context ctx_cli;
@@ -97,7 +96,7 @@ exit:
 /* END_CASE */
 
 /* BEGIN_CASE depends_on:MBEDTLS_FS_IO */
-void dhm_file( char *filename, char *p, char *g, int len )
+void dhm_file( char * filename, char * p, char * g, int len )
 {
     mbedtls_dhm_context ctx;
     mbedtls_mpi P, G;
@@ -121,7 +120,7 @@ exit:
 /* END_CASE */
 
 /* BEGIN_CASE depends_on:MBEDTLS_SELF_TEST */
-void dhm_selftest()
+void dhm_selftest(  )
 {
     TEST_ASSERT( mbedtls_dhm_self_test( 1 ) == 0 );
 }
