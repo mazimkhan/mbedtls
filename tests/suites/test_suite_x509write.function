@@ -11,8 +11,8 @@
  */
 
 /* BEGIN_CASE depends_on:MBEDTLS_PEM_WRITE_C:MBEDTLS_X509_CSR_WRITE_C */
-void x509_csr_check( char *key_file, char *cert_req_check_file,
-                     int md_type, int key_usage, int cert_type )
+void x509_csr_check( char * key_file, char * cert_req_check_file, int md_type,
+                     int key_usage, int cert_type )
 {
     mbedtls_pk_context key;
     mbedtls_x509write_csr req;
@@ -71,12 +71,12 @@ exit:
 /* END_CASE */
 
 /* BEGIN_CASE depends_on:MBEDTLS_PEM_WRITE_C:MBEDTLS_X509_CRT_WRITE_C:MBEDTLS_SHA1_C */
-void x509_crt_check( char *subject_key_file, char *subject_pwd,
-                     char *subject_name, char *issuer_key_file,
-                     char *issuer_pwd, char *issuer_name,
-                     char *serial_str, char *not_before, char *not_after,
-                     int md_type, int key_usage, int cert_type, int ver,
-                     char *cert_check_file )
+void x509_crt_check( char * subject_key_file, char * subject_pwd,
+                     char * subject_name, char * issuer_key_file,
+                     char * issuer_pwd, char * issuer_name, char * serial_str,
+                     char * not_before, char * not_after, int md_type,
+                     int key_usage, int cert_type, int ver,
+                     char * cert_check_file )
 {
     mbedtls_pk_context subject_key, issuer_key;
     mbedtls_x509write_cert crt;
@@ -158,7 +158,8 @@ exit:
 /* END_CASE */
 
 /* BEGIN_CASE depends_on:MBEDTLS_X509_CREATE_C:MBEDTLS_X509_USE_C */
-void mbedtls_x509_string_to_names( char *name, char *parsed_name, int result )
+void mbedtls_x509_string_to_names( char * name, char * parsed_name, int result
+                                   )
 {
     int ret;
     size_t len = 0;
