@@ -8,10 +8,8 @@
  */
 
 /* BEGIN_CASE */
-void pbkdf2_hmac( int hash, uint8_t * pw_str, uint32_t pw_len,
-                  uint8_t * salt_str, uint32_t salt_len, int it_cnt,
-                  int key_len, uint8_t * result_key_string,
-                  uint32_t result_key_string_len )
+void pbkdf2_hmac( int hash, HexParam_t * pw_str, HexParam_t * salt_str,
+                  int it_cnt, int key_len, HexParam_t * result_key_string )
 {
     mbedtls_md_context_t ctx;
     const mbedtls_md_info_t *info;
@@ -23,10 +21,10 @@ void pbkdf2_hmac( int hash, uint8_t * pw_str, uint32_t pw_len,
     info = mbedtls_md_info_from_type( hash );
     TEST_ASSERT( info != NULL );
     TEST_ASSERT( mbedtls_md_setup( &ctx, info, 1 ) == 0 );
-    TEST_ASSERT( mbedtls_pkcs5_pbkdf2_hmac( &ctx, pw_str, pw_len, salt_str, salt_len,
+    TEST_ASSERT( mbedtls_pkcs5_pbkdf2_hmac( &ctx, pw_str->x, pw_str->len, salt_str->x, salt_str->len,
                                      it_cnt, key_len, key ) == 0 );
 
-    TEST_ASSERT( hexcmp( key, result_key_string, key_len, result_key_string_len ) == 0 );
+    TEST_ASSERT( hexcmp( key, result_key_string->x, key_len, result_key_string->len ) == 0 );
 
 exit:
     mbedtls_md_free( &ctx );
