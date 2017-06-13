@@ -24,8 +24,8 @@ function(add_test_suite suite_name)
 
     add_custom_command(
         OUTPUT test_suite_${data_name}.c
-        COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_code.pl ${CMAKE_CURRENT_SOURCE_DIR}/suites test_suite_${suite_name} test_suite_${data_name}
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_code.pl mbedtls suites/helpers.function suites/main_test.function suites/test_suite_${suite_name}.function suites/test_suite_${data_name}.data
+        COMMAND python scripts/generate_code.py -f suites/test_suite_${suite_name}.function -d suites/test_suite_${data_name}.data -t suites/main_test.function -p suites/desktop_test.function -s suites --help-file suites/helpers.function -o .
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/scripts/generate_code.py mbedtls suites/helpers.function suites/main_test.function suites/desktop_test.function suites/test_suite_${suite_name}.function suites/test_suite_${data_name}.data
     )
 
     include_directories(${CMAKE_CURRENT_SOURCE_DIR})
