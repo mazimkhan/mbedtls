@@ -847,6 +847,16 @@
 #define MBEDTLS_FS_IO
 
 /**
+ * \def MBEDTLS_FS_IO_ALT
+ *
+ * Provide your own alternate filesystem implementation.
+ *
+ * Requires: MBEDTLS_FS_IO
+ *
+ */
+#define MBEDTLS_FS_IO_ALT
+
+/**
  * \def MBEDTLS_NO_DEFAULT_ENTROPY_SOURCES
  *
  * Do not add default entropy sources. These are the platform specific,
