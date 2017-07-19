@@ -69,7 +69,7 @@ int main( void )
 #else
 int main( void )
 {
-    FILE *f;
+    mbedtls_file_t *f;
 
     int ret;
     size_t n, buflen;
@@ -119,7 +119,7 @@ int main( void )
     mbedtls_printf( "\n  . Reading private key from rsa_priv.txt" );
     fflush( stdout );
 
-    if( ( f = fopen( "rsa_priv.txt", "rb" ) ) == NULL )
+    if( ( f = mbedtls_fopen( "rsa_priv.txt", "rb" ) ) == NULL )
     {
         ret = 1;
         mbedtls_printf( " failed\n  ! Could not open rsa_priv.txt\n" \
@@ -137,10 +137,10 @@ int main( void )
     {
         mbedtls_printf( " failed\n  ! mbedtls_mpi_read_file returned %d\n\n",
                         ret );
-        fclose( f );
+        mbedtls_fclose( f );
         goto exit;
     }
-    fclose( f );
+    mbedtls_fclose( f );
 
     if( ( ret = mbedtls_rsa_import( &rsa, &N, &P, &Q, &D, &E ) ) != 0 )
     {
@@ -162,7 +162,7 @@ int main( void )
     mbedtls_printf( "\n  . Reading DH parameters from dh_prime.txt" );
     fflush( stdout );
 
-    if( ( f = fopen( "dh_prime.txt", "rb" ) ) == NULL )
+    if( ( f = mbedtls_fopen( "dh_prime.txt", "rb" ) ) == NULL )
     {
         ret = 1;
         mbedtls_printf( " failed\n  ! Could not open dh_prime.txt\n" \
@@ -174,11 +174,11 @@ int main( void )
         mbedtls_mpi_read_file( &dhm.G, 16, f ) != 0 )
     {
         mbedtls_printf( " failed\n  ! Invalid DH parameter file\n\n" );
-        fclose( f );
+        mbedtls_fclose( f );
         goto exit;
     }
 
-    fclose( f );
+    mbedtls_fclose( f );
 
     /*
      * 3. Wait for a client to connect

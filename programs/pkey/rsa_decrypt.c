@@ -60,7 +60,7 @@ int main( void )
 #else
 int main( int argc, char *argv[] )
 {
-    FILE *f;
+    mbedtls_file_t *f;
     int return_val, exit_val, c;
     size_t i;
     mbedtls_rsa_context rsa;
@@ -69,6 +69,7 @@ int main( int argc, char *argv[] )
     mbedtls_ctr_drbg_context ctr_drbg;
     unsigned char result[1024];
     unsigned char buf[512];
+    unsigned char read_buf[512];
     const char *pers = "rsa_decrypt";
     ((void) argv);
 
@@ -110,7 +111,7 @@ int main( int argc, char *argv[] )
     mbedtls_printf( "\n  . Reading private key from rsa_priv.txt" );
     fflush( stdout );
 
-    if( ( f = fopen( "rsa_priv.txt", "rb" ) ) == NULL )
+    if( ( f = mbedtls_fopen( "rsa_priv.txt", "rb" ) ) == NULL )
     {
         exit_val = MBEDTLS_EXIT_FAILURE;
         mbedtls_printf( " failed\n  ! Could not open rsa_priv.txt\n" \
@@ -130,10 +131,10 @@ int main( int argc, char *argv[] )
         exit_val = MBEDTLS_EXIT_FAILURE;
         mbedtls_printf( " failed\n  ! mbedtls_mpi_read_file returned %d\n\n",
                         return_val );
-        fclose( f );
+        mbedtls_fclose( f );
         goto exit;
     }
-    fclose( f );
+    mbedtls_fclose( f );
 
     if( ( return_val = mbedtls_rsa_import( &rsa, &N, &P, &Q, &D, &E ) ) != 0 )
     {
@@ -152,7 +153,7 @@ int main( int argc, char *argv[] )
     /*
      * Extract the RSA encrypted value from the text file
      */
-    if( ( f = fopen( "result-enc.txt", "rb" ) ) == NULL )
+    if( ( f = mbedtls_fopen( "result-enc.txt", "rb" ) ) == NULL )
     {
         exit_val = MBEDTLS_EXIT_FAILURE;
         mbedtls_printf( "\n  ! Could not open %s\n\n", "result-enc.txt" );
@@ -161,11 +162,21 @@ int main( int argc, char *argv[] )
 
     i = 0;
 
-    while( fscanf( f, "%02X", &c ) > 0 &&
-           i < (int) sizeof( buf ) )
-        buf[i++] = (unsigned char) c;
+    while( mbedtls_fread( read_buf, 1, sizeof( read_buf ), f ) > 0 &&
+            i < (int) sizeof( buf ) )
+    {
+        size_t offset = 0;
+        while( offset < sizeof( read_buf ) &&
+                i < (int) sizeof( buf ) )
+        {
+            sscanf( (char *)( read_buf + offset ), "%02X", &c );
+            offset += 2;
+            buf[i++] = (unsigned char) c;
+        }
+    }
 
-    fclose( f );
+
+    mbedtls_fclose( f );
 
     if( i != rsa.len )
     {
