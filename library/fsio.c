@@ -19,7 +19,10 @@
  *  This file is part of mbed TLS (https://tls.mbed.org)
  */
 
+#include <string.h>
+
 #include "mbedtls/fsio.h"
+#include "mbedtls/serialize.h"
 
 
 #if defined(MBEDTLS_FS_IO) && defined(MBEDTLS_FS_IO_ALT)
@@ -34,16 +37,17 @@
  */
 mbedtls_file_t * mbedtls_fopen( const char *path, const char *mode )
 {
+    uint32_t status, file_id, len;
     mbedtls_serialize_push_start();
-    mbedtls_serialize_push_int16( MBEDTLS_SERIALIZE_FS_IO_TAG_FOPEN );
-    mbedtls_serialize_push_buffer( path, strlen( path_len ) );
+    mbedtls_serialize_push_int32( MBEDTLS_SERIALIZE_FUNCTION_FOPEN );
+    mbedtls_serialize_push_buffer( path, strlen( path ) );
     mbedtls_serialize_push_buffer( mode, strlen( mode ) );
     mbedtls_serialize_push_end();
 
     mbedtls_serialize_pop_start();
-    mbedtls_serialize_pop_int32( ); /* Status */
-    mbedtls_serialize_pop_int32( ); /* Id */
-    mbedtls_serialize_pop_int32( ); /* length */
+    mbedtls_serialize_pop_int32( &status ); /* Status */
+    mbedtls_serialize_pop_int32( &file_id ); /* Id */
+    mbedtls_serialize_pop_int32( &len ); /* length */
     mbedtls_serialize_pop_end();
     return NULL;
 }

@@ -71,6 +71,12 @@ extern "C" {
        out: int32 len */
 #define MBEDTLS_SERIALIZE_FUNCTION_SHUTDOWN     0x010510 /**< shutdown (close socket) */
     /* in: int16 fd */
+#define MBEDTLS_SERIALIZE_FUNCTION_FOPEN        0x010001 /**< open file */
+    /* in: int32 file path size
+       in: int8_t * file path
+       in: int32 mode size
+       in: int8_t * file open mode
+    */
 
 /** Flag for MBEDTLS_SERIALIZE_FUNCTION_SOCKET to indicate connect vs bind */
 #define MBEDTLS_SERIALIZE_SOCKET_DIRECTION_MASK  0x8000
@@ -121,6 +127,11 @@ int mbedtls_serialize_pop_int32( uint32_t *value );
 /** Following functions need platform specific implementation. */
 int mbedtls_serialize_read( uint8_t *buffer, size_t length );
 int mbedtls_serialize_write( const uint8_t *buffer, size_t length );
+void mbedtls_serialize_push_start();
+void mbedtls_serialize_push_end();
+void mbedtls_serialize_pop_start();
+void mbedtls_serialize_pop_end();
+
 
 #ifdef __cplusplus
 };

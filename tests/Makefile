@@ -84,7 +84,8 @@ APPS =	test_suite_aes.ecb	test_suite_aes.cbc		\
 	test_suite_rsa		test_suite_shax			\
 	test_suite_ssl		test_suite_timing		\
 	test_suite_x509parse	test_suite_x509write		\
-	test_suite_xtea		test_suite_version
+	test_suite_xtea		test_suite_version		\
+	test_suite_fs_abstraction
 
 # Look up for associated function files
 func.test_suite_aes.ecb := test_suite_aes
@@ -147,6 +148,7 @@ func.test_suite_x509parse := test_suite_x509parse
 func.test_suite_x509write := test_suite_x509write
 func.test_suite_xtea := test_suite_xtea
 func.test_suite_version := test_suite_version
+func.test_suite_fs_abstraction := test_suite_fs_abstraction
 
 .SILENT:
 

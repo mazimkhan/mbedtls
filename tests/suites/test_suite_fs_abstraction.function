@@ -1,0 +1,18 @@
+/* BEGIN_HEADER */
+/* END_HEADER */
+
+/* BEGIN_DEPENDENCIES
+ * depends_on:MBEDTLS_FS_IO
+ * END_DEPENDENCIES
+ */
+
+/* BEGIN_CASE */
+void fopen( char * path )
+{
+
+    mbedtls_file_t * file = mbedtls_fopen( path, "r");
+
+exit:
+}
+/* END_CASE */
+
