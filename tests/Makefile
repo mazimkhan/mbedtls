@@ -2,7 +2,7 @@
 # To compile on SunOS: add "-lsocket -lnsl" to LDFLAGS
 # To compile with PKCS11: add "-lpkcs11-helper" to LDFLAGS
 
-CFLAGS	?= -O2
+CFLAGS	?=
 WARNING_CFLAGS ?= -Wall -W -Wdeclaration-after-statement -Wno-unused-function -Wno-unused-value
 LDFLAGS ?=
 
@@ -19,7 +19,9 @@ DEP=../library/libmbedcrypto.$(DLEXT) ../library/libmbedx509.$(DLEXT) ../library
 endif
 
 ifdef DEBUG
-LOCAL_CFLAGS += -g3
+LOCAL_CFLAGS += -g3 -Og
+else
+LOCAL_CFLAGS += -O2
 endif
 
 # if we're running on Windows, build for Windows
