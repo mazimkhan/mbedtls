@@ -21,7 +21,7 @@ make test
 cmake_full_test_sh = cmake_test_sh + """
 openssl version
 gnutls-serv -v
-export PATH=/usr/local/openssl-1.0.2g/bin:/usr/local/gnutls-3.4.10/bin:$PATH
+export PATH=/usr/local/openssl-1.0.2g/bin:/usr/local/gnutls-3.4.10/bin:\$PATH
 ./tests/compat.sh
 find . -name c-srv-1.log|xargs cat 
 ./tests/ssl-opt.sh
@@ -33,7 +33,7 @@ make clean
 make
 make test
 ./programs/test/selftest
-export PATH=/usr/local/openssl-1.0.2g/bin:/usr/local/gnutls-3.4.10/bin:$PATH
+export PATH=/usr/local/openssl-1.0.2g/bin:/usr/local/gnutls-3.4.10/bin:\$PATH
 ./tests/compat.sh
 ./tests/ssl-opt.sh
 ./tests/scripts/test-ref-configs.pl
