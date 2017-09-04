@@ -17,7 +17,7 @@ def get_all_sh_job(){
             deleteDir()
             unstash 'src'
             sh """
-ls -ltr
+ls -ltra
 ls -ltr tests/scripts/
 """
             sh "./tests/scripts/all.sh"
