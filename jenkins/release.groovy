@@ -20,7 +20,7 @@ def get_all_sh_job(){
 git config --global user.email "you@example.com"
 git config --global user.name "Your Name"
 git init
-git add
+git add .
 git commit -m "CI code copy"
 ls -ltra
 ls -ltr tests/scripts/
