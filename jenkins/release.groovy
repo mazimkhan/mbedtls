@@ -17,6 +17,8 @@ def get_all_sh_job(){
             deleteDir()
             unstash 'src'
             sh """
+git config --global user.email "you@example.com"
+git config --global user.name "Your Name"
 git init
 git add
 git commit -m "CI code copy"
