@@ -17,6 +17,9 @@ def get_all_sh_job(){
             deleteDir()
             unstash 'src'
             sh """
+git init
+git add
+git commit -m "CI code copy"
 ls -ltra
 ls -ltr tests/scripts/
 """
