@@ -57,7 +57,7 @@ MSBuild ALL_BUILD.vcxproj
 compiler_paths = [
     'gcc' : '/usr/bin/gcc',
     'gcc48' : '/usr/local/bin/gcc48',
-    'clang' : '/usr/bin/clang',
+    'clang' : '/usr/bin/clang-3.6',
     'cc' : 'cc'
 ]
 
