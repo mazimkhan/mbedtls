@@ -147,6 +147,7 @@ node {
     jobs = jobs + gen_batch_jobs_foreach( 'win32_msvc12_64', windows_platforms, windows_compilers, win32_msvc12_64_test_bat )
     */
 
+    jobs.failFast = false
     parallel jobs
 }
 
