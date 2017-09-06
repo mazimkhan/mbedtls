@@ -57,7 +57,7 @@ MSBuild ALL_BUILD.vcxproj
 compiler_paths = [
     'gcc' : 'gcc',
     'gcc48' : '/usr/local/bin/gcc48',
-    'clang' : 'clang-3.6',
+    'clang' : 'clang',
     'cc' : 'cc'
 ]
 
@@ -110,7 +110,7 @@ node {
     deleteDir()
     def linux_platforms = [ "ecs-debian-i386", "ecs-debian-x64" ]
     def bsd_platforms = [ "freebsd" ]
-    def bsd_compilers = [ "gcc48" ]
+    def bsd_compilers = [ "clang" ]
     def windows_platforms = ['windows']
     def windows_compilers = ['cc']
     def all_compilers = ['gcc', 'clang']
