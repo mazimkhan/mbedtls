@@ -62,18 +62,20 @@ compiler_paths = [
 ]
 
 def gen_jobs_foreach ( label, platforms, compilers, script ){
-    jobs = [:]
+    def jobs = [:]
 
     for ( platform in platforms ){
         for ( compiler in compilers ){
-            jobs["${label}-${compiler}-${platform}"] = {
-                //label = "${platform} && mbedtls"
-                node( "${platform}" ){
+            def job_name = "${label}-${compiler}-${platform}"
+            def label = "${platform}"
+            def compiler_path = compiler_paths["${compiler}"]
+            def temp = sprintf( "${script}", "${compiler_path}" )
+            def shell_script = "${temp}"
+            jobs[job_name] = {
+                node( label ){
                     timestamps {
-                        def compiler_path = compiler_paths["${compiler}"]
                         unstash 'src'
-                        def final_script = sprintf( "${script}", compiler_path)
-                        sh "${final_script}"
+                        sh shell_script
                     }
                 }
             }
