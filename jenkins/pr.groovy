@@ -74,6 +74,7 @@ def gen_jobs_foreach ( label, platforms, compilers, script ){
             jobs[job_name] = {
                 node( node_lbl ){
                     timestamps {
+                        deleteDir()
                         unstash 'src'
                         sh shell_script
                     }
@@ -92,6 +93,7 @@ def gen_batch_jobs_foreach ( label, platforms, compilers, script ){
             jobs["${label}-${compiler}-${platform}"] = {
                 node( "${platform}" ){
                     timestamps {
+                        deleteDir()
                         def compiler_path = compiler_paths["${compiler}"]
                         unstash 'src'
                         bat "${script}"
@@ -105,6 +107,7 @@ def gen_batch_jobs_foreach ( label, platforms, compilers, script ){
 
 /* main job */
 node {
+    deleteDir()
     def linux_platforms = [ "ecs-debian-i386", "ecs-debian-x64" ]
     def bsd_platforms = [ "freebsd" ]
     def bsd_compilers = [ "gcc48" ]
