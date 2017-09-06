@@ -1,17 +1,17 @@
 
 std_make_test_sh = """ make clean
-make
+CC=%s make
 make check
 ./programs/test/selftest
 """
 
 gmake_test_sh = """ gmake clean
-gmake
+CC=%s gmake
 gmake check
 ./programs/test/selftest
 """
 
-cmake_test_sh = """ cmake -D CMAKE_BUILD_TYPE:String=Check .
+cmake_test_sh = """CC=%s  cmake -D CMAKE_BUILD_TYPE:String=Check .
 make clean
 make
 make test
@@ -28,7 +28,7 @@ find . -name c-srv-1.log|xargs cat
 ./tests/scripts/test-ref-configs.pl
 """
 
-cmake_asan_test_sh = """ cmake -D CMAKE_BUILD_TYPE:String=Asan .
+cmake_asan_test_sh = """CC=%s  cmake -D CMAKE_BUILD_TYPE:String=Asan .
 make clean
 make
 make test
@@ -55,9 +55,9 @@ MSBuild ALL_BUILD.vcxproj
 """
 
 compiler_paths = [
-    'gcc' : '/usr/bin/gcc',
+    'gcc' : 'gcc',
     'gcc48' : '/usr/local/bin/gcc48',
-    'clang' : '/usr/bin/clang-3.6',
+    'clang' : 'clang-3.6',
     'cc' : 'cc'
 ]
 
@@ -72,8 +72,8 @@ def gen_jobs_foreach ( label, platforms, compilers, script ){
                     timestamps {
                         def compiler_path = compiler_paths[compiler]
                         unstash 'src'
-                        script =  """ CC=${compiler_path} """ + script
-                        sh script
+                        def final_script = sprintf( script, compiler_path)
+                        sh final_script
                     }
                 }
             }
@@ -92,7 +92,6 @@ def gen_batch_jobs_foreach ( label, platforms, compilers, script ){
                     timestamps {
                         def compiler_path = compiler_paths[compiler]
                         unstash 'src'
-                        script =  """ CC=${compiler_path} """ + script
                         bat script
                     }
                 }
