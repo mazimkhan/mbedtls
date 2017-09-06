@@ -67,12 +67,12 @@ def gen_jobs_foreach ( label, platforms, compilers, script ){
     for ( platform in platforms ){
         for ( compiler in compilers ){
             def job_name = "${label}-${compiler}-${platform}"
-            def label = "${platform}"
+            def node_lbl = "${platform}"
             def compiler_path = compiler_paths["${compiler}"]
             def temp = sprintf( "${script}", "${compiler_path}" )
             def shell_script = "${temp}"
             jobs[job_name] = {
-                node( label ){
+                node( node_lbl ){
                     timestamps {
                         unstash 'src'
                         sh shell_script
