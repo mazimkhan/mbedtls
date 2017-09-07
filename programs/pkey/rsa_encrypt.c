@@ -60,7 +60,7 @@ int main( void )
 #else
 int main( int argc, char *argv[] )
 {
-    mbedtls_file_t *f;
+    mbedtls_file_t f;
     int return_val, exit_val;
     size_t i;
     mbedtls_rsa_context rsa;
@@ -106,7 +106,7 @@ int main( int argc, char *argv[] )
     mbedtls_printf( "\n  . Reading public key from rsa_pub.txt" );
     fflush( stdout );
 
-    if( ( f = mbedtls_fopen( "rsa_pub.txt", "rb" ) ) == NULL )
+    if( ( f = mbedtls_fopen( "rsa_pub.txt", "rb" ) ) == MBEDTLS_FILE_INVALID )
     {
         exit_val = MBEDTLS_EXIT_FAILURE;
         mbedtls_printf( " failed\n  ! Could not open rsa_pub.txt\n" \
@@ -163,7 +163,7 @@ int main( int argc, char *argv[] )
     /*
      * Write the signature into result-enc.txt
      */
-    if( ( f = mbedtls_fopen( "result-enc.txt", "wb+" ) ) == NULL )
+    if( ( f = mbedtls_fopen( "result-enc.txt", "wb+" ) ) == MBEDTLS_FILE_INVALID )
     {
         exit_val = MBEDTLS_EXIT_FAILURE;
         mbedtls_printf( " failed\n  ! Could not create %s\n\n", "result-enc.txt" );
