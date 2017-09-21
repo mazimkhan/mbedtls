@@ -13,7 +13,7 @@ def get_code_coverage_job(){
 
 def get_all_sh_job(){
     return {
-        node('ecs-debian-i386') {
+        node('ubuntu-16.10 && mbedtls') {
             deleteDir()
             unstash 'src'
             sh """
