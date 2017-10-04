@@ -134,8 +134,7 @@ int get_line( FILE *f, char *buf, size_t len )
                 break;
             }
         }
-    }
-    while( !has_string );
+    } while( !has_string );
 
     /* Strip new line and carriage return */
     ret = buf + strlen( buf );

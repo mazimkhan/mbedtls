@@ -395,6 +395,8 @@ def parse_test_data(data_f, debug=False):
     name = ''
     for line in data_f:
         line = line.strip()
+        if len(line) and line[0] == '#': # Skip comments
+            continue
 
         # Blank line indicates end of test
         if len(line) == 0:

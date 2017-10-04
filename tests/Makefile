@@ -86,6 +86,8 @@ APPS =	test_suite_aes.ecb	test_suite_aes.cbc		\
 	test_suite_x509parse	test_suite_x509write		\
 	test_suite_xtea		test_suite_version
 
+BINARIES := $(addsuffix $(EXEXT),$(APPS))
+
 # Look up for associated function files
 func.test_suite_aes.ecb := test_suite_aes
 func.test_suite_aes.cbc := test_suite_aes
@@ -172,8 +174,6 @@ $(C_FILES): %.c: suites/$$(func.$$*).function suites/%.data scripts/generate_cod
 		--help-file suites/helpers.function \
 		-o .
 
-
-BINARIES := $(addsuffix $(EXEXT),$(APPS))
 
 $(BINARIES): %$(EXEXT): %.c $(DEP)
 	echo "  CC    $<"
