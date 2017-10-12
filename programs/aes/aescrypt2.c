@@ -159,7 +159,7 @@ int main( int argc, char *argv[] )
      */
     if( ( fkey = mbedtls_fopen( argv[4], "rb" ) ) != MBEDTLS_FILE_INVALID )
     {
-        keylen = mbedtls_fread( key, 1, sizeof( key ), fkey );
+        keylen = mbedtls_fread( key, sizeof( key ), fkey );
         mbedtls_fclose( fkey );
     }
     else
@@ -251,7 +251,7 @@ int main( int argc, char *argv[] )
         /*
          * Append the IV at the beginning of the output.
          */
-        if( mbedtls_fwrite( IV, 1, 16, fout ) != 16 )
+        if( mbedtls_fwrite( IV, 16, fout ) != 16 )
         {
             mbedtls_fprintf( stderr, "mbedtls_fwrite(%d bytes) failed\n", 16 );
             goto exit;
@@ -283,7 +283,7 @@ int main( int argc, char *argv[] )
             n = ( filesize - offset > 16 ) ? 16 : (int)
                 ( filesize - offset );
 
-            if( mbedtls_fread( buffer, 1, n, fin ) != (size_t) n )
+            if( mbedtls_fread( buffer, n, fin ) != (size_t) n )
             {
                 mbedtls_fprintf( stderr, "mbedtls_fread(%d bytes) failed\n", n );
                 goto exit;
@@ -295,7 +295,7 @@ int main( int argc, char *argv[] )
             mbedtls_aes_crypt_ecb( &aes_ctx, MBEDTLS_AES_ENCRYPT, buffer, buffer );
             mbedtls_md_hmac_update( &sha_ctx, buffer, 16 );
 
-            if( mbedtls_fwrite( buffer, 1, 16, fout ) != 16 )
+            if( mbedtls_fwrite( buffer, 16, fout ) != 16 )
             {
                 mbedtls_fprintf( stderr, "mbedtls_fwrite(%d bytes) failed\n", 16 );
                 goto exit;
@@ -309,7 +309,7 @@ int main( int argc, char *argv[] )
          */
         mbedtls_md_hmac_finish( &sha_ctx, digest );
 
-        if( mbedtls_fwrite( digest, 1, 32, fout ) != 32 )
+        if( mbedtls_fwrite( digest, 32, fout ) != 32 )
         {
             mbedtls_fprintf( stderr, "mbedtls_fwrite(%d bytes) failed\n", 16 );
             goto exit;
@@ -347,7 +347,7 @@ int main( int argc, char *argv[] )
         /*
          * Read the IV and original filesize modulo 16.
          */
-        if( mbedtls_fread( buffer, 1, 16, fin ) != 16 )
+        if( mbedtls_fread( buffer, 16, fin ) != 16 )
         {
             mbedtls_fprintf( stderr, "mbedtls_fread(%d bytes) failed\n", 16 );
             goto exit;
@@ -379,7 +379,7 @@ int main( int argc, char *argv[] )
          */
         for( offset = 0; offset < filesize; offset += 16 )
         {
-            if( mbedtls_fread( buffer, 1, 16, fin ) != 16 )
+            if( mbedtls_fread( buffer, 16, fin ) != 16 )
             {
                 mbedtls_fprintf( stderr, "mbedtls_fread(%d bytes) failed\n", 16 );
                 goto exit;
@@ -398,7 +398,7 @@ int main( int argc, char *argv[] )
             n = ( lastn > 0 && offset == filesize - 16 )
                 ? lastn : 16;
 
-            if( mbedtls_fwrite( buffer, 1, n, fout ) != (size_t) n )
+            if( mbedtls_fwrite( buffer, n, fout ) != (size_t) n )
             {
                 mbedtls_fprintf( stderr, "mbedtls_fwrite(%d bytes) failed\n", n );
                 goto exit;
@@ -410,7 +410,7 @@ int main( int argc, char *argv[] )
          */
         mbedtls_md_hmac_finish( &sha_ctx, digest );
 
-        if( mbedtls_fread( buffer, 1, 32, fin ) != 32 )
+        if( mbedtls_fread( buffer, 32, fin ) != 32 )
         {
             mbedtls_fprintf( stderr, "mbedtls_fread(%d bytes) failed\n", 32 );
             goto exit;
