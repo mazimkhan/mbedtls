@@ -28,96 +28,10 @@ import sys
 import json
 
 
-class CIEnv(object):
-    """
-    Specify execution environment for a Test.
-    """
-    pass
-
-
-class CIBuilder(object):
-    """
-    CI Build & test steps builder.
-    """
-
-    def __init__(self, env, platform):
-        """
-        Instantiate builder with execution environment and platform spec.
-        :param env: 
-        :param platform: 
-        """
-        pass
-
-    def gen(self):
-        """
-        Generate build script and specification.
-        :return: 
-        """
-        platform = None
-        name = None
-        script = None
-        return platform, name, script
-
-
-
+SH_ENV_FILE='cienv.sh'
+BATCH_ENV_FILE='cienv.bat'
 
 mbedtls_scripts = {
-    'make': {
-        'script': """
-${MAKE} clean
-${MAKE}
-${MAKE} check
-./programs/test/selftest
-""",
-        'environment': ['CC', 'MAKE']
-    },
-    'cmake': {
-        'script': """cmake -D CMAKE_BUILD_TYPE:String=Check .
-${MAKE} clean
-${MAKE}
-${MAKE} test
-./programs/test/selftest
-""",
-        'environment': ['CC', 'MAKE']
-    },
-    'cmake-full': {
-        'script': """
-${MAKE} clean
-${MAKE}
-${MAKE} test
-./programs/test/selftest
-openssl version
-gnutls-serv -v
-export PATH=/usr/local/openssl-1.0.2g/bin:/usr/local/gnutls-3.4.10/bin:$PATH
-export SEED=1
-./tests/compat.sh
-find . -name c-srv-1.log|xargs cat 
-./tests/ssl-opt.sh
-./tests/scripts/test-ref-configs.pl
-""",
-        'environment': ['CC', 'MAKE']
-    },
-    'cmake-asan': {
-        'script': """
-set +e
-grep \"fno-sanitize-recover=undefined,integer\" CMakeLists.txt
-if [ $? -ne 0 ]; 
-then 
-    sed -i s/\"fno-sanitize-recover\"/\"fno-sanitize-recover=undefined,integer\"/ CMakeLists.txt; 
-fi
-set -e
-cmake -D CMAKE_BUILD_TYPE:String=ASan .
-make
-make test
-./programs/test/selftest
-export PATH=/usr/local/openssl-1.0.2g/bin:/usr/local/gnutls-3.4.10/bin:$PATH
-export SEED=1
-./tests/compat.sh
-./tests/ssl-opt.sh
-./tests/scripts/test-ref-configs.pl
-""",
-        'environment': ['CC', 'MAKE']
-    },
     'mingw-make': {
         'script': """
 cmake . -G MinGW Makefiles
@@ -138,6 +52,7 @@ MSBuild ALL_BUILD.vcxproj
 """
     }
 }
+
 
 ci_test_campaigns = {
    "commit_tests": {
@@ -199,8 +114,34 @@ def check_scripts(campaign_name):
     for test_name, details in campaign.iteritems():
         for platform in details['platforms']:
             ci_test_name = "%s-%s" %(test_name, platform)
-            print details
             yield ci_test_name, details['script'], details.get('environment', None), platform
+
+
+def gen_sh_env_file(environment):
+    """
+    Generate environment script for ciscript.sh.
+    
+    :param environment: 
+    :return: 
+    """
+    with open(SH_ENV_FILE, 'w') as f:
+        if environment:
+            for k, v in environment.iteritems():
+                f.write("%s=%s\n" % (k, v))
+        os.chmod(SH_ENV_FILE, 0o777)
+
+
+def gen_bat_env_file(environment):
+    """
+    Generate environment script for ciscript.bat.
+    
+    :param environment: 
+    :return: 
+    """
+    with open('cienv.bat', 'w') as f:
+        if environment:
+            for k, v in environment.iteritems():
+                f.write("set %s=%s\n" % (k, v))
 
 
 def list(campaign):
@@ -214,51 +155,6 @@ def list(campaign):
         print "%s|%s" %(ci_test_name, platform)
 
 
-def gen_batch_script(script):
-    """
-    
-    :param script: 
-    :return: 
-    """
-    return script
-
-
-def gen_sh_script(script):
-    """
-    
-    :param script: 
-    :return: 
-    """
-    script = "!#/bin/sh\n\nset -e\nset -x\nset -v\n\n" + script
-    return script
-
-
-def check_if_windows(platform):
-    """
-    
-    :param platform: 
-    :return: 
-    """
-    return 'windows' in platform.lower()
-
-
-def gen_script(test_name, environment, platform):
-    print test_name
-    print environment
-    print platform
-
-    script = mbedtls_scripts[test_name]['script']
-    if environment:
-        for k, v in environment.iteritems():
-            script = "%s=%s\n" % (k, v) + script
-    if check_if_windows(platform):
-        script = gen_batch_script(script)
-    else:
-        script = gen_sh_script(script)
-    with open('script.sh', 'w') as f:
-        f.write(script)
-
-
 def gen(test_to_generate):
     """
     Generate script for specified test.
@@ -269,9 +165,11 @@ def gen(test_to_generate):
     """
     for campaign in ci_test_campaigns.keys():
         for ci_test_name, test_name, environment, platform in check_scripts(campaign):
-            print "%s == %s" % (ci_test_name, test_to_generate)
             if ci_test_name == test_to_generate:
-                gen_script(test_name, environment, platform)
+                if 'windows' in platform.lower():
+                    gen_bat_env_file(environment)
+                else:
+                    gen_sh_env_file(environment)
                 return
     print ("Error: Campaign or test not found!")
     sys.exit(1)
@@ -296,3 +194,4 @@ Commands:
     else:
         print(usage)
         sys.exit(1)
+
