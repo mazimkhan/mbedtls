@@ -90,6 +90,12 @@ int main( void )
 #define DFL_CONSTRAINTS         1
 #define DFL_DIGEST              MBEDTLS_MD_SHA256
 
+int is_remote_key( const char * remote_info );
+int load_pubkey_from_remote( const char * remote_info, mbedtls_pk_context * ctx );
+int serial_xfer( const char * serial_port, const unsigned char * tx_buf,
+                 size_t tx_buf_len, unsigned char * rx_buf, size_t rx_buf_len,
+                 size_t * rx_len );
+
 #define USAGE \
     "\n usage: cert_write param=<>...\n"                \
     "\n acceptable parameters:\n"                       \
@@ -577,14 +583,21 @@ int main( int argc, char *argv[] )
         mbedtls_printf( "  . Loading the subject key ..." );
         fflush( stdout );
 
-        ret = mbedtls_pk_parse_keyfile( &loaded_subject_key, opt.subject_key,
-                                 opt.subject_pwd );
-        if( ret != 0 )
+        if ( is_remote_key( opt.subject_key ) )
         {
-            mbedtls_strerror( ret, buf, 1024 );
-            mbedtls_printf( " failed\n  !  mbedtls_pk_parse_keyfile "
-                            "returned -0x%04x - %s\n\n", -ret, buf );
-            goto exit;
+            ret = load_pubkey_from_remote( opt.subject_key, &loaded_subject_key );
+        }
+        else
+        {
+            ret = mbedtls_pk_parse_keyfile( &loaded_subject_key, opt.subject_key,
+                    opt.subject_pwd );
+            if( ret != 0 )
+            {
+                mbedtls_strerror( ret, buf, 1024 );
+                mbedtls_printf( " failed\n  !  mbedtls_pk_parse_keyfile "
+                        "returned -0x%04x - %s\n\n", -ret, buf );
+                goto exit;
+            }
         }
 
         mbedtls_printf( " ok\n" );
@@ -803,6 +816,186 @@ exit:
 
     return( ret );
 }
+
+/** Below magic pattern is used with ATCAECC508A demo application (or similar)
+ *  running on target to differentiate between user input and cert_write.exe.
+ */
+#define REMOTE_KEY_MAGIC_PATTERN    "rEmOtEkEy"
+#define REMOTE_KEY_ID_MIN           0
+#define REMOTE_KEY_ID_MAX           7
+#define REMOTE_KEY_SERIAL_BAUD      CBR_9600
+
+#define REMOTE_KEY_FUNC_GET_PUBKEY  0xA
+#define REMOTE_KEY_FUNC_SIGN        0xB
+
+extern mbedtls_pk_info_t mbedtls_eckey_info;
+
+int is_remote_key( const char * remote_info )
+{
+    int tag_len = strlen( REMOTE_KEY_TAG );
+    if ( strlen( remote_info ) > tag_len &&
+         strncmp( remote_info, REMOTE_KEY_TAG, tag_len ) == 0 )
+        return 1;
+    else
+        return 0;
+}
+
+/** Load a transparent public key context with public key from remote device
+ *  over serial.
+ *  This function sends:
+ *      rEmOtEkEy<char encoded function code=GetPubKey><char encoded private key ID>
+ *  Receives:
+ *      <4 bytes length indicator in network order><concatenated public key>
+ */
+int load_pubkey_from_remote( const char * remote_info, mbedtls_pk_context * ctx )
+{
+    int key_idx = 0, offset = 0;
+    const char * serial_port = NULL;
+    char func_buffer[100];
+    unsigned char pub_key_buf[100];
+    size_t rx_len = 0;
+    unsigned char * rx_buf = pub_key_buf;
+
+    offset = strlen( REMOTE_KEY_TAG );
+    key_idx = (int)remote_info[offset++];
+
+    if ( key_idx < REMOTE_KEY_ID_MIN || key_idx > REMOTE_KEY_ID_MAX )
+    {
+        mbedtls_printf( " failed\n  !  Invalid remote key index %d\n\n", key_idx );
+        return( -1 );
+    }
+    serial_port = remote_info[offset];
+
+    /* Prepare command */
+    offset = strlen( REMOTE_KEY_TAG );
+    memcpy( func_buffer, REMOTE_KEY_TAG, offset );
+    func_buffer[offset++] = REMOTE_KEY_FUNC_GET_PUBKEY;
+    func_buffer[offset++] = key_idx;
+
+    if ( serial_xfer( serial_port, func_buffer, offset, pub_key_buf, sizeof( pub_key_buf ), &rx_len ) != 0 )
+    {
+        mbedtls_printf( " failed\n  !  Serial error trying to get pulic key\n\n" );
+        return( -1 );
+    }
+
+    rx_buf += 4; // skip length indicator
+    rx_len -= 4;
+
+    if ( *rx_buf++ == MBEDTLS_PK_ECDSA )
+    {
+        static mbedtls_ecp_keypair ecp_key;
+
+        rx_len--;
+        mbedtls_ecp_keypair_init(&ecp_key);
+        ret = mbedtls_ecp_group_load(&ecp_key.grp, MBEDTLS_ECP_DP_SECP256R1);
+        if ( ret != 0 )
+            return( -1 );
+        ret = mbedtls_ecp_point_read_binary(&ecp_key.grp, &ecp_key.Q, rx_buf, rx_len );
+        if ( ret != 0 )
+            return( -1 );
+        ctx->pk_info = &mbedtls_eckey_info;
+        ctx->pk_ctx = &ecp_key;
+    }
+    else
+    {
+        mbedtls_printf( " failed\n  !  Unsupported pulic key. Only ECDSA key support.\n\n" );
+        return( -1 );
+    }
+}
+
+int serial_xfer( const char * serial_port, const unsigned char * tx_buf,
+                 size_t tx_buf_len, unsigned char * rx_buf, size_t rx_buf_len,
+                 size_t * rx_len )
+{
+    HANDLE hComm;
+    DCB dcbConfig;
+    COMMTIMEOUTS commTimeout;
+    DWORD xfer_len;
+    int ret = -1;
+    size_t len = 0;
+
+    do
+    {
+        // Open port
+        hComm = CreateFile( serial_port, GENERIC_READ | GENERIC_WRITE, 0, 0,
+                OPEN_EXISTING, 0, 0 );
+        if ( hComm == INVALID_HANDLE_VALUE )
+            break;
+
+        if( GetCommState( hComm, &dcbConfig ) )
+        {
+            /*
+            dcbConfig.fBinary = TRUE;
+            dcbConfig.fParity = TRUE;
+            */
+
+            dcbConfig.BaudRate = REMOTE_KEY_SERIAL_BAUD;
+            dcbConfig.Parity = NOPARITY;
+            dcbConfig.ByteSize = 8;
+            dcbConfig.StopBits = ONESTOPBIT;
+            dcbConfig.fOutxCtsFlow = FALSE;         // No CTS output flow control
+            dcbConfig.fOutxDsrFlow = FALSE;         // No DSR output flow control
+            dcbConfig.fDtrControl = DTR_CONTROL_DISABLE; // DTR flow control type
+            dcbConfig.fDsrSensitivity = FALSE;      // DSR sensitivity
+            dcbConfig.fTXContinueOnXoff = TRUE;     // XOFF continues Tx
+            dcbConfig.fOutX = FALSE;                // No XON/XOFF out flow control
+            dcbConfig.fInX = FALSE;                 // No XON/XOFF in flow control
+            dcbConfig.fErrorChar = FALSE;           // Disable error replacement
+            dcbConfig.fNull = FALSE;                // Disable null stripping
+            dcbConfig.fRtsControl = RTS_CONTROL_DISABLE; // RTS flow control
+            dcbConfig.fAbortOnError = FALSE;        // Do not abort reads/writes on error
+        }
+        else
+            break;
+
+        if( !SetComState( hComm, &dcbConfig ) )
+            break;
+
+        if( GetCommTimeouts( hComm, &commTimeout ) )
+        {
+            commTimeout.ReadIntervalTimeout = 1000;
+            commTimeout.ReadTotalTimeoutMultiplier = 10;
+            commTimeout.ReadTotalTimeoutConstant = 1000;
+            commTimeout.WriteTotalTimeoutConstant = 1000;
+            commTimeout.WriteTotalTimeoutMultiplier = 10;
+        }
+        else
+            break;
+
+        if( !SetCommTimeouts( hComm, &commTimeout ) )
+            break;
+
+
+        if( !WriteFile( hComm, tx_buf, tx_buf_len, 
+                    &xfer_len, NULL ) )
+            break;
+
+        /* Read length indicator */
+        if( !ReadFile( hComm, rx_buf, 4, &xfer_len, NULL ) )
+            break;
+
+        len = ( rx_buf[0] << 24 ) | ( rx_buf[1] << 16 ) | ( rx_buf[2] << 8 ) | rx_buf[3];
+        *rx_len = len;
+        /* Read payload */
+        while( len != 0 )
+        {
+            if( !ReadFile( hComm, rx_buf + 4, len, &xfer_len, NULL ) )
+                break;
+            len -= xfer_len;
+        }
+
+        ret = 0;
+    } while( 0 );
+
+    if( hComm != INVALID_HANDLE_VALUE )
+    {
+        CloseHandle( m_hSerialComm );
+        m_hSerialComm = INVALID_HANDLE_VALUE;
+    }
+
+    return( ret );
+}
+
 #endif /* MBEDTLS_X509_CRT_WRITE_C && MBEDTLS_X509_CRT_PARSE_C &&
           MBEDTLS_FS_IO && MBEDTLS_ENTROPY_C && MBEDTLS_CTR_DRBG_C &&
           MBEDTLS_ERROR_C && MBEDTLS_PEM_WRITE_C */
