@@ -57,6 +57,7 @@ int main( void )
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <Windows.h>
 
 #if defined(MBEDTLS_X509_CSR_PARSE_C)
 #define USAGE_CSR                                                           \
@@ -92,6 +93,7 @@ int main( void )
 
 int is_remote_key( const char * remote_info );
 int load_pubkey_from_remote( const char * remote_info, mbedtls_pk_context * ctx );
+int setup_opaque_privkey( const char * remote_info, mbedtls_pk_context * ctx );
 int serial_xfer( const char * serial_port, const unsigned char * tx_buf,
                  size_t tx_buf_len, unsigned char * rx_buf, size_t rx_buf_len,
                  size_t * rx_len );
@@ -221,7 +223,7 @@ int main( int argc, char *argv[] )
     mbedtls_x509_crt issuer_crt;
     mbedtls_pk_context loaded_issuer_key, loaded_subject_key;
     mbedtls_pk_context *issuer_key = &loaded_issuer_key,
-                *subject_key = &loaded_subject_key;
+                       *subject_key = &loaded_subject_key;
     char buf[1024];
     char issuer_name[256];
     int i;
@@ -252,7 +254,7 @@ int main( int argc, char *argv[] )
 
     if( argc == 0 )
     {
-    usage:
+usage:
         mbedtls_printf( USAGE );
         ret = 1;
         goto exit;
@@ -327,7 +329,7 @@ int main( int argc, char *argv[] )
         {
             opt.authority_identifier = atoi( q );
             if( opt.authority_identifier != 0 &&
-                opt.authority_identifier != 1 )
+                    opt.authority_identifier != 1 )
             {
                 mbedtls_printf( "Invalid argument for option %s\n", p );
                 goto usage;
@@ -337,7 +339,7 @@ int main( int argc, char *argv[] )
         {
             opt.subject_identifier = atoi( q );
             if( opt.subject_identifier != 0 &&
-                opt.subject_identifier != 1 )
+                    opt.subject_identifier != 1 )
             {
                 mbedtls_printf( "Invalid argument for option %s\n", p );
                 goto usage;
@@ -347,7 +349,7 @@ int main( int argc, char *argv[] )
         {
             opt.basic_constraints = atoi( q );
             if( opt.basic_constraints != 0 &&
-                opt.basic_constraints != 1 )
+                    opt.basic_constraints != 1 )
             {
                 mbedtls_printf( "Invalid argument for option %s\n", p );
                 goto usage;
@@ -480,12 +482,12 @@ int main( int argc, char *argv[] )
 
     mbedtls_entropy_init( &entropy );
     if( ( ret = mbedtls_ctr_drbg_seed( &ctr_drbg, mbedtls_entropy_func, &entropy,
-                               (const unsigned char *) pers,
-                               strlen( pers ) ) ) != 0 )
+                    (const unsigned char *) pers,
+                    strlen( pers ) ) ) != 0 )
     {
         mbedtls_strerror( ret, buf, 1024 );
         mbedtls_printf( " failed\n  !  mbedtls_ctr_drbg_seed returned %d - %s\n",
-                        ret, buf );
+                ret, buf );
         goto exit;
     }
 
@@ -500,7 +502,7 @@ int main( int argc, char *argv[] )
     {
         mbedtls_strerror( ret, buf, 1024 );
         mbedtls_printf( " failed\n  !  mbedtls_mpi_read_string "
-                        "returned -0x%04x - %s\n\n", -ret, buf );
+                "returned -0x%04x - %s\n\n", -ret, buf );
         goto exit;
     }
 
@@ -520,17 +522,17 @@ int main( int argc, char *argv[] )
         {
             mbedtls_strerror( ret, buf, 1024 );
             mbedtls_printf( " failed\n  !  mbedtls_x509_crt_parse_file "
-                            "returned -0x%04x - %s\n\n", -ret, buf );
+                    "returned -0x%04x - %s\n\n", -ret, buf );
             goto exit;
         }
 
         ret = mbedtls_x509_dn_gets( issuer_name, sizeof(issuer_name),
-                                 &issuer_crt.subject );
+                &issuer_crt.subject );
         if( ret < 0 )
         {
             mbedtls_strerror( ret, buf, 1024 );
             mbedtls_printf( " failed\n  !  mbedtls_x509_dn_gets "
-                            "returned -0x%04x - %s\n\n", -ret, buf );
+                    "returned -0x%04x - %s\n\n", -ret, buf );
             goto exit;
         }
 
@@ -554,17 +556,17 @@ int main( int argc, char *argv[] )
         {
             mbedtls_strerror( ret, buf, 1024 );
             mbedtls_printf( " failed\n  !  mbedtls_x509_csr_parse_file "
-                            "returned -0x%04x - %s\n\n", -ret, buf );
+                    "returned -0x%04x - %s\n\n", -ret, buf );
             goto exit;
         }
 
         ret = mbedtls_x509_dn_gets( subject_name, sizeof(subject_name),
-                                 &csr.subject );
+                &csr.subject );
         if( ret < 0 )
         {
             mbedtls_strerror( ret, buf, 1024 );
             mbedtls_printf( " failed\n  !  mbedtls_x509_dn_gets "
-                            "returned -0x%04x - %s\n\n", -ret, buf );
+                    "returned -0x%04x - %s\n\n", -ret, buf );
             goto exit;
         }
 
@@ -606,8 +608,15 @@ int main( int argc, char *argv[] )
     mbedtls_printf( "  . Loading the issuer key ..." );
     fflush( stdout );
 
-    ret = mbedtls_pk_parse_keyfile( &loaded_issuer_key, opt.issuer_key,
-                             opt.issuer_pwd );
+    if ( is_remote_key( opt.issuer_key ) )
+    {
+        ret = setup_opaque_privkey( opt.issuer_key, &loaded_issuer_key );
+    }
+    else
+    {
+        ret = mbedtls_pk_parse_keyfile( &loaded_issuer_key, opt.issuer_key,
+                opt.issuer_pwd );
+    }
     if( ret != 0 )
     {
         mbedtls_strerror( ret, buf, 1024 );
@@ -820,6 +829,7 @@ exit:
 /** Below magic pattern is used with ATCAECC508A demo application (or similar)
  *  running on target to differentiate between user input and cert_write.exe.
  */
+#define REMOTE_KEY_CMD_TAG          "remote"
 #define REMOTE_KEY_MAGIC_PATTERN    "rEmOtEkEy"
 #define REMOTE_KEY_ID_MIN           0
 #define REMOTE_KEY_ID_MAX           7
@@ -832,12 +842,12 @@ extern mbedtls_pk_info_t mbedtls_eckey_info;
 
 int is_remote_key( const char * remote_info )
 {
-    int tag_len = strlen( REMOTE_KEY_TAG );
+    size_t tag_len = strlen( REMOTE_KEY_CMD_TAG );
+    printf ("is_remote_key %s\n", remote_info);
     if ( strlen( remote_info ) > tag_len &&
-         strncmp( remote_info, REMOTE_KEY_TAG, tag_len ) == 0 )
+         strncmp( remote_info, REMOTE_KEY_CMD_TAG, tag_len ) == 0 )
         return 1;
-    else
-        return 0;
+    return 0;
 }
 
 /** Load a transparent public key context with public key from remote device
@@ -849,26 +859,27 @@ int is_remote_key( const char * remote_info )
  */
 int load_pubkey_from_remote( const char * remote_info, mbedtls_pk_context * ctx )
 {
-    int key_idx = 0, offset = 0;
+    int key_idx = 0, offset = 0, ret = 0;
     const char * serial_port = NULL;
-    char func_buffer[100];
+    unsigned char func_buffer[100];
     unsigned char pub_key_buf[100];
     size_t rx_len = 0;
     unsigned char * rx_buf = pub_key_buf;
 
-    offset = strlen( REMOTE_KEY_TAG );
+    offset = strlen( REMOTE_KEY_CMD_TAG );
     key_idx = (int)remote_info[offset++];
+    key_idx = key_idx - 48; // ascii to decimal
 
     if ( key_idx < REMOTE_KEY_ID_MIN || key_idx > REMOTE_KEY_ID_MAX )
     {
         mbedtls_printf( " failed\n  !  Invalid remote key index %d\n\n", key_idx );
         return( -1 );
     }
-    serial_port = remote_info[offset];
+    serial_port = remote_info + offset;
 
     /* Prepare command */
-    offset = strlen( REMOTE_KEY_TAG );
-    memcpy( func_buffer, REMOTE_KEY_TAG, offset );
+    offset = strlen( REMOTE_KEY_MAGIC_PATTERN );
+    memcpy( func_buffer, REMOTE_KEY_MAGIC_PATTERN, offset );
     func_buffer[offset++] = REMOTE_KEY_FUNC_GET_PUBKEY;
     func_buffer[offset++] = key_idx;
 
@@ -899,6 +910,140 @@ int load_pubkey_from_remote( const char * remote_info, mbedtls_pk_context * ctx 
     else
     {
         mbedtls_printf( " failed\n  !  Unsupported pulic key. Only ECDSA key support.\n\n" );
+        return( -1 );
+    }
+    return( 0 );
+}
+
+typedef struct
+{
+    const char *    serial_port;
+    unsigned char   key_idx;
+}remote_serial_pk_context;
+
+/**
+ * @brief           Tell if can do the operation given by type
+ *
+ * @param type      Target type
+ *
+ * @return          0 if context can't do the operations,
+ *                  1 otherwise.
+ */
+static int remote_can_do_func(const void *ctx, mbedtls_pk_type_t type)
+{
+    UNUSED(ctx);
+#if defined (SSL_CLIENT_APP_ACTIVATE_DEBUG)
+  printf("atcaecc_can_do_func()> %d\n", type);
+#endif /* SSL_CLIENT_APP_ACTIVATE_DEBUG */
+
+  return (MBEDTLS_PK_ECDSA == type);
+}
+
+/**
+  * @brief  Use STSAFE private key for signature.
+  *
+  * @param ctx       ECDSA context
+  * @param md_alg    Algorithm that was used to hash the message
+  * @param hash      Message hash
+  * @param hash_len  Length of hash
+  * @param sig       Buffer that will hold the signature
+  * @param sig_len   Length of the signature written
+  * @param f_rng     RNG function
+  * @param p_rng     RNG parameter
+  *
+  * @retval 0 if successful, or 1.
+  */
+static int remote_sign_func(void *ctx, mbedtls_md_type_t md_alg,
+                            const unsigned char *hash, size_t hash_len,
+                            unsigned char *sig, size_t *sig_len,
+                            int (*f_rng)(void *, unsigned char *, size_t),
+                            void *p_rng)
+{
+    printf ("atcaecc_sign_func\r\n");
+  ATCAECCPKContext * atctx = (ATCAECCPKContext *)ctx;
+  uint8_t * sig_int = NULL;
+  size_t sig_int_len;
+  mbedtls_mpi r, s;
+  mbedtls_mpi_init( &r );
+  mbedtls_mpi_init( &s );
+    printf ("before device sign\r\n");
+  ATCAError err = atctx->device.Sign(atctx->keyIdx, (const uint8_t *)hash, hash_len, &sig_int, &sig_int_len);
+  if (err == ATCA_ERR_NO_ERROR)
+    printf ("Sign succeeded!\r\n");
+  printf ("Recvd signature of sz %u\r\n", sig_int_len);
+  // import r & s from buffer
+  // create asn1 from r & s
+  mbedtls_mpi_read_binary(&r, sig_int, sig_int_len/2);
+    printf ("R imported!\r\n");
+  mbedtls_mpi_read_binary(&s, sig_int + sig_int_len/2, sig_int_len/2);
+    printf ("S imported!\r\n");
+  ecdsa_signature_to_asn1( &r, &s, sig, sig_len, 100 );
+  //memcpy(sig, sig_int, *sig_len);
+
+printf( "First 8 bytes of signature: %02x %02x %02x %02x %02x %02x %02x %02x\n",
+        sig[0], sig[1], sig[2], sig[3], sig[4], sig[5], sig[6], sig[7] );
+
+  // Verify signature 
+  //if (atcaecc_verify_func(ctx, md_alg, hash, hash_len, sig, *sig_len) != 0)
+  //  printf ("Signature verification failed!\r\n");
+
+  return (err == ATCA_ERR_NO_ERROR)?0:1;
+}
+
+/* Opaque private key */
+static const mbedtls_pk_info_t atcaecc_ecdsa_info =
+{
+  /* MBEDTLS_PK_ECKEY, */
+  MBEDTLS_PK_OPAQUE,
+  "RemoteSerial",
+  NULL,
+  remote_can_do_func,
+  NULL,
+  NULL,
+  remote_sign_func,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL
+};
+
+int mbedtls_pk_remote_setup( mbedtls_pk_context * ctx, const char * serial_port, unsigned char key_idx )
+{
+    // allocate remote serial context
+    static remote_serial_pk_context remote;
+
+    if ( ctx == NULL )
+        return( MBEDTLS_ERR_PK_BAD_INPUT_DATA );
+
+    remote.serial_port = serial_port;
+    remote.key_idx = key_idx;
+    ctx->pk_ctx = (void *)&remote;
+    ctx->pk_info = &remote_pk_info;
+
+    return( 0 );
+}
+
+int setup_opaque_privkey( const char * remote_info, mbedtls_pk_context * ctx )
+{
+    int key_idx = 0, offset = 0, ret = 0;
+    const char * serial_port = NULL;
+
+    offset = strlen( REMOTE_KEY_CMD_TAG );
+    key_idx = (int)remote_info[offset++];
+    key_idx = key_idx - 48; // ascii to decimal
+
+    if ( key_idx < REMOTE_KEY_ID_MIN || key_idx > REMOTE_KEY_ID_MAX )
+    {
+        mbedtls_printf( " failed\n  !  Invalid remote key index %d\n\n", key_idx );
+        return( -1 );
+    }
+    serial_port = remote_info + offset;
+    ret = mbedtls_pk_remote_setup( &loaded_issuer_key, serial_port, key_idx );
+    if ( ret != 0 )
+    {
+        mbedtls_printf( " failed\n  ! remote pk setup failure \n\n" );
         return( -1 );
     }
 }
@@ -948,7 +1093,7 @@ int serial_xfer( const char * serial_port, const unsigned char * tx_buf,
         else
             break;
 
-        if( !SetComState( hComm, &dcbConfig ) )
+        if( !SetCommState( hComm, &dcbConfig ) )
             break;
 
         if( GetCommTimeouts( hComm, &commTimeout ) )
@@ -977,11 +1122,11 @@ int serial_xfer( const char * serial_port, const unsigned char * tx_buf,
         len = ( rx_buf[0] << 24 ) | ( rx_buf[1] << 16 ) | ( rx_buf[2] << 8 ) | rx_buf[3];
         *rx_len = len;
         /* Read payload */
-        while( len != 0 )
+        while( len < *rx_len && ( 4 + len ) < rx_buf_len )
         {
-            if( !ReadFile( hComm, rx_buf + 4, len, &xfer_len, NULL ) )
+            if( !ReadFile( hComm, rx_buf + 4 + len, *rx_len - len, &xfer_len, NULL ) )
                 break;
-            len -= xfer_len;
+            len += xfer_len;
         }
 
         ret = 0;
@@ -989,8 +1134,8 @@ int serial_xfer( const char * serial_port, const unsigned char * tx_buf,
 
     if( hComm != INVALID_HANDLE_VALUE )
     {
-        CloseHandle( m_hSerialComm );
-        m_hSerialComm = INVALID_HANDLE_VALUE;
+        CloseHandle( hComm );
+        hComm = INVALID_HANDLE_VALUE;
     }
 
     return( ret );
