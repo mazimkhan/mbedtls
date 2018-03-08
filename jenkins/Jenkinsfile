@@ -12,7 +12,7 @@ node {
 pwd
 ls -ltr
 cd jenkins/
-python cibuilder.py ${env.JOB_NAME} >> tests.txt
+python cibuilder.py ${env.JOB_NAME} > tests.txt
     """
     tests = readFile 'tests.txt'
     def test_list = tests.split( '\n' )
