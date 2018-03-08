@@ -3,6 +3,7 @@ node {
     deleteDir()
     sh """
 pwd
+ls -ltr
 cd jenkins/
 python cibuilder.py ${env.JOB_NAME} >> tests.txt
     """
