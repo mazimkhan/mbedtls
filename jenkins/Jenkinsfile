@@ -19,11 +19,9 @@ cd jenkins/
 python cibuilder.py -c ${job_name} -o tests.txt
     """
     tests = readFile 'jenkins/tests.txt'
-    echo tests
     def test_list = tests.split( '\n' )
     for( test in test_list) {
-        echo test
-        def test_details = test.split( '|' )
+        def test_details = test.split( '\\|' )
         def test_name = test_details[0]
         def test_script = test_details[1]
         def label = test_details[2]
