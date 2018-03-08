@@ -8,12 +8,14 @@ node {
         submoduleCfg: [],
         userRemoteConfigs: [[credentialsId: "${env.GIT_CREDENTIALS_ID}",
         url: MBEDTLS_REPO]]])
+
+    //def job_name = "${env.JOB_NAME}"
+    def job_name = "mbedtls-commit-tests"
+
     sh """
 pwd
 ls -ltr
 cd jenkins/
-//def job_name = "${env.JOB_NAME}"
-def job_name = "mbedtls-commit-tests"
 python cibuilder.py -c ${job_name} -o tests.txt
     """
     tests = readFile 'tests.txt'
