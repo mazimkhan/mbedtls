@@ -148,15 +148,21 @@ def gen_bat_env_file(test_name, environment):
         f.write("set %s=%s\n" % ('TEST_NAME', test_name))
 
 
-def list_tests(campaign):
+def list_tests(campaign, filename):
     """
     List tests and config
     
     :param campaign:
+    :param filename:
     :return: 
     """
-    for ci_test_name, test_name, environment, platform in check_scripts(campaign):
-        print "%s|%s" %(ci_test_name, platform)
+    if filename:
+        with open(filename, 'w') as f:
+            for ci_test_name, test_name, environment, platform in check_scripts(campaign):
+                f.write("%s|%s\n" %(ci_test_name, platform))
+    else:
+        for ci_test_name, test_name, environment, platform in check_scripts(campaign):
+            print "%s|%s" %(ci_test_name, platform)
 
 
 def list_campaigns():
@@ -190,36 +196,18 @@ def gen(test_to_generate):
 
 
 if __name__=='__main__':
-    usage = '''%s: Usage: python %s [ list <campaign> | gen <test> ]
-
-Commands:
-    list <campaign>         Lists tests and platforms in specified campaign.
-                            Campaigns are [ commit_tests | release_test ]
-    gen <campaign> <test>   Generates a script for specified test.
-''' % (sys.argv[0], sys.argv[0])
     parser = OptionParser()
     parser.add_option('-C', '--list-compaigns', action="store_true", dest="list_campaigns", metavar="LIST_CAMPAIGNS")
-    parser.add_option('-c', '--compaign-name', dest="campaign_name", metavar="CAMPAIGN_NAME")
+    parser.add_option('-c', '--list-tests', dest="campaign_name", metavar="CAMPAIGN_NAME")
+    parser.add_option('-o', '--tests-out-file', dest="tests_outfile", metavar="TESTS_OUTFILE")
     parser.add_option('-e', '--gen-env', dest="gen_env", metavar="GEN_ENV", help="Generate envorinment")
     opts, args = parser.parse_args()
 
     if opts.list_campaigns:
         list_campaigns()
     elif opts.campaign_name:
-        list_tests(opts.campaign_name)
+        list_tests(opts.campaign_name, opts.tests_outfile)
     elif opts.gen_env:
         gen(opts.gen_env)
     else:
         parser.print_help()
-    # if len(sys.argv) < 3:
-    #     print(usage)
-    #     sys.exit(1)
-    #
-    # if sys.argv[1] == 'list':
-    #     list(sys.argv[2])
-    # elif sys.argv[1] == 'gen':
-    #     gen(sys.argv[2])
-    # else:
-    #     print(usage)
-    #     sys.exit(1)
-
