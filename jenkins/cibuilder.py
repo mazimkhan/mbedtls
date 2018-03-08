@@ -1,6 +1,6 @@
 # CI Build spec generator
 #
-# Copyright (C) 2006-2017, ARM Limited, All Rights Reserved
+# Copyright (C) 2018, ARM Limited, All Rights Reserved
 # SPDX-License-Identifier: Apache-2.0
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -26,14 +26,14 @@ Generates Build and Test specification for CI builds. This includes:
 import os
 import sys
 import json
+from optparse import OptionParser
 
-
-SH_ENV_FILE='cienv.sh'
-BATCH_ENV_FILE='cienv.bat'
+SH_ENV_FILE="cienv.sh"
+BATCH_ENV_FILE="cienv.bat"
 
 mbedtls_scripts = {
-    'mingw-make': {
-        'script': """
+    "mingw-make": {
+        "script": """
 cmake . -G MinGW Makefiles
             mingw32-make clean
             mingw32-make
@@ -41,13 +41,13 @@ cmake . -G MinGW Makefiles
         programs\\test\\selftest.exe
 """
     },
-    'msvc12-32': {
-        'script': """ cmake . -G Visual Studio 12
+    "msvc12-32": {
+        "script": """ cmake . -G Visual Studio 12
 MSBuild ALL_BUILD.vcxproj
 """
     },
-    'msvc12-64': {
-        'script': """ cmake . -G Visual Studio 12 Win64
+    "msvc12-64": {
+        "script": """ cmake . -G Visual Studio 12 Win64
 MSBuild ALL_BUILD.vcxproj
 """
     }
@@ -56,49 +56,49 @@ MSBuild ALL_BUILD.vcxproj
 
 ci_test_campaigns = {
    "commit_tests": {
-       'make-gcc': {
-           'script': 'make',
-           'environment': {'MAKE': 'make', 'CC': 'gcc'},
-           'platforms': ['debian-9-i386', 'debian-9-x64'],
+       "make-gcc": {
+           "script": "make",
+           "environment": {"MAKE": "make", "CC": "gcc"},
+           "platforms": ["debian-9-i386", "debian-9-x64"],
 
        },
-       'gmake-gcc': {
-           'script': 'make',
-           'environment': {'MAKE': 'gmake', 'CC': 'gcc'},
-           'platforms': ['debian-9-i386', 'debian-9-x64'],
+       "gmake-gcc": {
+           "script": "make",
+           "environment": {"MAKE": "gmake", "CC": "gcc"},
+           "platforms": ["debian-9-i386", "debian-9-x64"],
        },
-       'cmake': {
-           'script': 'cmake',
-           'environment': {'MAKE': 'gmake', 'CC': 'gcc'},
-           'platforms': ['debian-9-i386', 'debian-9-x64'],
+       "cmake": {
+           "script": "cmake",
+           "environment": {"MAKE": "gmake", "CC": "gcc"},
+           "platforms": ["debian-9-i386", "debian-9-x64"],
        },
-       'cmake-full':  {
-           'script': 'cmake-full',
-           'environment': {'MAKE': 'gmake', 'CC': 'gcc'},
-           'platforms': ['debian-9-i386', 'debian-9-x64'],
+       "cmake-full":  {
+           "script": "cmake-full",
+           "environment": {"MAKE": "gmake", "CC": "gcc"},
+           "platforms": ["debian-9-i386", "debian-9-x64"],
        },
-       'cmake-asan': {
-           'script': 'cmake-asan',
-           'environment': {'MAKE': 'gmake', 'CC': 'clang'},
-           'platforms': ['debian-9-i386', 'debian-9-x64'],
+       "cmake-asan": {
+           "script": "cmake-asan",
+           "environment": {"MAKE": "gmake", "CC": "clang"},
+           "platforms": ["debian-9-i386", "debian-9-x64"],
        },
-       'mingw-make': {
-           'script': 'mingw-make',
-           'platforms': ['windows'],
+       "mingw-make": {
+           "script": "mingw-make",
+           "platforms": ["windows"],
        },
-       'msvc12-32': {
-           'script': 'msvc12-32',
-           'platforms': ['windows'],
+       "msvc12-32": {
+           "script": "msvc12-32",
+           "platforms": ["windows"],
        },
-       'msvc12-64': {
-           'script': 'msvc12-64',
-           'platforms': ['windows'],
+       "msvc12-64": {
+           "script": "msvc12-64",
+           "platforms": ["windows"],
        }
    },
    "release_tests": {
-        'all.sh': {
-            'script': './tests/scripts/all.sh',
-            'platforms': ['ubuntu-16.04-x64']
+        "all.sh": {
+            "script": "./tests/scripts/all.sh",
+            "platforms": ["ubuntu-16.04-x64"]
         }
     }
 }
@@ -112,29 +112,32 @@ def check_scripts(campaign_name):
         sys.exit(1)
 
     for test_name, details in campaign.iteritems():
-        for platform in details['platforms']:
+        for platform in details["platforms"]:
             ci_test_name = "%s-%s" %(test_name, platform)
             yield ci_test_name, details['script'], details.get('environment', None), platform
 
 
-def gen_sh_env_file(environment):
+def gen_sh_env_file(test_name, environment):
     """
     Generate environment script for ciscript.sh.
     
-    :param environment: 
+    :param test_name:
+    :param environment:
     :return: 
     """
     with open(SH_ENV_FILE, 'w') as f:
         if environment:
             for k, v in environment.iteritems():
                 f.write("%s=%s\n" % (k, v))
+        f.write("%s=%s\n" % ('TEST_NAME', test_name))
         os.chmod(SH_ENV_FILE, 0o777)
 
 
-def gen_bat_env_file(environment):
+def gen_bat_env_file(test_name, environment):
     """
     Generate environment script for ciscript.bat.
     
+    :param test_name:
     :param environment: 
     :return: 
     """
@@ -142,9 +145,10 @@ def gen_bat_env_file(environment):
         if environment:
             for k, v in environment.iteritems():
                 f.write("set %s=%s\n" % (k, v))
+        f.write("set %s=%s\n" % ('TEST_NAME', test_name))
 
 
-def list(campaign):
+def list_tests(campaign):
     """
     List tests and config
     
@@ -153,6 +157,16 @@ def list(campaign):
     """
     for ci_test_name, test_name, environment, platform in check_scripts(campaign):
         print "%s|%s" %(ci_test_name, platform)
+
+
+def list_campaigns():
+    """
+    List campaigns.
+    
+    :return: 
+    """
+    for campaign in ci_test_campaigns:
+        print(campaign)
 
 
 def gen(test_to_generate):
@@ -167,11 +181,11 @@ def gen(test_to_generate):
         for ci_test_name, test_name, environment, platform in check_scripts(campaign):
             if ci_test_name == test_to_generate:
                 if 'windows' in platform.lower():
-                    gen_bat_env_file(environment)
+                    gen_bat_env_file(test_name, environment)
                 else:
-                    gen_sh_env_file(environment)
+                    gen_sh_env_file(test_name, environment)
                 return
-    print ("Error: Campaign or test not found!")
+    print("Error: Campaign or test not found!")
     sys.exit(1)
 
 
@@ -183,15 +197,29 @@ Commands:
                             Campaigns are [ commit_tests | release_test ]
     gen <campaign> <test>   Generates a script for specified test.
 ''' % (sys.argv[0], sys.argv[0])
-    if len(sys.argv) < 3:
-        print(usage)
-        sys.exit(1)
+    parser = OptionParser()
+    parser.add_option('-C', '--list-compaigns', action="store_true", dest="list_campaigns", metavar="LIST_CAMPAIGNS")
+    parser.add_option('-c', '--compaign-name', dest="campaign_name", metavar="CAMPAIGN_NAME")
+    parser.add_option('-e', '--gen-env', dest="gen_env", metavar="GEN_ENV", help="Generate envorinment")
+    opts, args = parser.parse_args()
 
-    if sys.argv[1] == 'list':
-        list(sys.argv[2])
-    elif sys.argv[1] == 'gen':
-        gen(sys.argv[2])
+    if opts.list_campaigns:
+        list_campaigns()
+    elif opts.campaign_name:
+        list_tests(opts.campaign_name)
+    elif opts.gen_env:
+        gen(opts.gen_env)
     else:
-        print(usage)
-        sys.exit(1)
+        parser.print_help()
+    # if len(sys.argv) < 3:
+    #     print(usage)
+    #     sys.exit(1)
+    #
+    # if sys.argv[1] == 'list':
+    #     list(sys.argv[2])
+    # elif sys.argv[1] == 'gen':
+    #     gen(sys.argv[2])
+    # else:
+    #     print(usage)
+    #     sys.exit(1)
 

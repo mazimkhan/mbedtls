@@ -1,34 +1,15 @@
 
 node {
     deleteDir()
-    /* Load script based on jenkins job name */
-    if ( "${env.JOB_NAME}" == 'mbedtls-job-dev' ) {
-        /* Sparse Checkout required script file */
-        checkout([$class: 'GitSCM', branches: [[name: 'refs/heads/jenkinsfile']],
-                doGenerateSubmoduleConfigurations: false,
-                extensions: [[$class: 'CloneOption', honorRefspec: true,
-                noTags: true, reference: '', shallow: true]],
-                submoduleCfg: [],
-                userRemoteConfigs: [[credentialsId: "${env.GIT_CREDENTIALS_ID}",
-                url: "${env.MBEDTLS_REPO}"]]])
-        stash 'src'
-        echo 'Dispatching release job!'
-        def job = load 'jenkins/release.groovy'
-        job.dispatch_job()
-    }
-    if ( "${env.JOB_NAME}" == 'mbedtls-job-pr-dev' ) {
-        /* Sparse Checkout required script file */
-        checkout([$class: 'GitSCM', branches: [[name: 'refs/heads/jenkinsfile']],
-                doGenerateSubmoduleConfigurations: false,
-                extensions: [[$class: 'CloneOption', honorRefspec: true,
-                noTags: true, reference: '', shallow: true]],
-                submoduleCfg: [],
-                userRemoteConfigs: [[credentialsId: "${env.GIT_CREDENTIALS_ID}",
-                url: "${env.MBEDTLS_REPO}"]]])
-        stash 'src'
-        echo 'Dispatching pr job!'
-        def job = load 'jenkins/pr.groovy'
-        job.dispatch_job()
+    sh "python cibuilder.py ${env.JOB_NAME} >> tests.txt"
+    tests = readFile 'tests.txt'
+    def test_list = tests.split( '\n' )
+    for( test in test_list) {
+        def test_details = test.split( '|' )
+        def test_name = test_details[0]
+        def test_script = test_details[1]
+        def label = test_details[2]
+        echo "${test_name} ${test_script} ${label}"
     }
 }
 
