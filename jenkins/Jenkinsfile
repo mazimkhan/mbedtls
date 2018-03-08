@@ -1,5 +1,4 @@
 
-node {
     deleteDir()
     sh """
 pwd
@@ -16,5 +15,4 @@ python cibuilder.py ${env.JOB_NAME} >> tests.txt
         def label = test_details[2]
         echo "${test_name} ${test_script} ${label}"
     }
-}
 
