@@ -12,7 +12,9 @@ node {
 pwd
 ls -ltr
 cd jenkins/
-python cibuilder.py ${env.JOB_NAME} -o tests.txt
+//def job_name = "${env.JOB_NAME}"
+def job_name = "mbedtls-commit-tests"
+python cibuilder.py -c ${job_name} -o tests.txt
     """
     tests = readFile 'tests.txt'
     def test_list = tests.split( '\n' )

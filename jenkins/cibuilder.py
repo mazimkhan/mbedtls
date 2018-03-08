@@ -31,31 +31,8 @@ from optparse import OptionParser
 SH_ENV_FILE="cienv.sh"
 BATCH_ENV_FILE="cienv.bat"
 
-mbedtls_scripts = {
-    "mingw-make": {
-        "script": """
-cmake . -G MinGW Makefiles
-            mingw32-make clean
-            mingw32-make
-        mingw32-make test
-        programs\\test\\selftest.exe
-"""
-    },
-    "msvc12-32": {
-        "script": """ cmake . -G Visual Studio 12
-MSBuild ALL_BUILD.vcxproj
-"""
-    },
-    "msvc12-64": {
-        "script": """ cmake . -G Visual Studio 12 Win64
-MSBuild ALL_BUILD.vcxproj
-"""
-    }
-}
-
-
 ci_test_campaigns = {
-   "commit_tests": {
+   "mbedtls-commit-tests": {
        "make-gcc": {
            "script": "make",
            "environment": {"MAKE": "make", "CC": "gcc"},
