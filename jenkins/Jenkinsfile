@@ -34,7 +34,7 @@ docker run --rm -u \$(id -u):\$(id -g) --entrypoint /var/lib/build/jenkins/ciscr
                     if( platform in windows_labels ){
                         bat """
 python cibuilder.py -e ${test_name}
-.\jenkins\ciscript.bat
+.\\jenkins\\ciscript.bat
 """
                     } else {
                         sh """
