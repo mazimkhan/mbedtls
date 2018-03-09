@@ -28,15 +28,15 @@
        },
        "mingw-make": {
            "script": "mingw-make",
-           "platforms": ["windows"]
+           "platforms": ["windows-tls"]
        },
        "msvc12-32": {
            "script": "msvc12-32",
-           "platforms": ["windows"]
+           "platforms": ["windows-tls"]
        },
        "msvc12-64": {
            "script": "msvc12-64",
-           "platforms": ["windows"]
+           "platforms": ["windows-tls"]
        }
    },
    "release_tests": {
