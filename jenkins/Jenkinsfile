@@ -35,7 +35,7 @@ docker run --rm -u \$(id -u):\$(id -g) --entrypoint /var/lib/build/jenkins/ciscr
                     if( platform in windows_labels ){
                         bat """
 python jenkins\\cibuilder.py -e ${test_name}
-echo \"MBEDTLS_ROOT=.\" >> cienv.bat
+echo set MBEDTLS_ROOT=. >> cienv.bat
 .\\jenkins\\ciscript.bat
 """
                     } else {
