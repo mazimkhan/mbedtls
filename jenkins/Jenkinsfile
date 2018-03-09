@@ -8,8 +8,8 @@ windows_labels = [
     "windows-tls"
 ]
 
-def create_subjob( test_name, plaform ) {
-    def docker_lbl = platform_to_docker_label_map[plaform]
+def create_subjob( test_name, platform ) {
+    def docker_lbl = platform_to_docker_label_map[platform]
     if( docker_lbl ) {
         return {
             node( docker_lbl ) {
