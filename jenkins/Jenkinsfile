@@ -54,15 +54,14 @@ python cibuilder.py -c ${job_name} -o tests.txt
         def test_details = test.split( '\\|' )
         def test_name = test_details[0]
         def platform = test_details[1]
-        echo "${test_name} ${platform}"
         def job = create_subjob( test_name, platform )
         if( job ){
             jobs[test_name] = job
         } else {
             echo "Failed to create job for ${test_name} ${platform}"
         }
-        jobs.failFast = false
-        parallel jobs
     }
+    jobs.failFast = false
+    parallel jobs
 }
 
