@@ -34,7 +34,8 @@ BATCH_ENV_FILE="cienv.bat"
 
 
 def get_cidata():
-    with open(CI_META_FILE) as f:
+    cidatafile = os.path.join(os.path.dirname(os.path.realpath(__file__)), CI_META_FILE)
+    with open(cidatafile) as f:
         cidata = json.load(f)
     return cidata
 

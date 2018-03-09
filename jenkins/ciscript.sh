@@ -19,9 +19,9 @@ check_env(){
 }
 
 . ./cienv.sh
-check_env TEST_NAME
+check_env TEST_NAME MBEDTLS_ROOT
 
-cd ..
+cd ${MBEDTLS_ROOT}
 
 if [ "$TEST_NAME" = "make" ]; then
     check_env CC MAKE
