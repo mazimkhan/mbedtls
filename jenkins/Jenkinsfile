@@ -19,7 +19,7 @@ def create_subjob( test_name, platform ) {
                         unstash 'src'
                         sh """
 python jenkins/cibuilder.py -e ${test_name}
-echo \"MBEDTLS_ROOT=`pwd`\" >> cienv.sh
+echo \"MBEDTLS_ROOT=.\" >> cienv.sh
 docker run --rm -u \$(id -u):\$(id -g) --entrypoint /var/lib/build/jenkins/ciscript.sh -w /var/lib/build -v `pwd`/src:/var/lib/build -v /home/ubuntu/.ssh:/home/mbedjenkins/.ssh ${platform}
 """
                     }
@@ -34,12 +34,14 @@ docker run --rm -u \$(id -u):\$(id -g) --entrypoint /var/lib/build/jenkins/ciscr
                     unstash 'src'
                     if( platform in windows_labels ){
                         bat """
-python cibuilder.py -e ${test_name}
+python jenkins\\cibuilder.py -e ${test_name}
+echo \"MBEDTLS_ROOT=.\" >> cienv.bat
 .\\jenkins\\ciscript.bat
 """
                     } else {
                         sh """
-python cibuilder.py -e ${test_name}
+python jenkins/cibuilder.py -e ${test_name}
+echo \"MBEDTLS_ROOT=.\" >> cienv.sh
 ./jenkins/ciscript.sh
 """
                     }
