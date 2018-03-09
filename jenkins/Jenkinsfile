@@ -15,14 +15,12 @@ def create_subjob( test_name, platform ) {
             node( docker_lbl ) {
                 timestamps {
                     deleteDir()
-                    dir( 'src' ) {
-                        unstash 'src'
-                        sh """
+                    unstash 'src'
+                    sh """
 python jenkins/cibuilder.py -e ${test_name}
 echo \"MBEDTLS_ROOT=.\" >> cienv.sh
-docker run --rm -u \$(id -u):\$(id -g) --entrypoint /var/lib/build/jenkins/ciscript.sh -w /var/lib/build -v `pwd`/src:/var/lib/build -v /home/ubuntu/.ssh:/home/mbedjenkins/.ssh ${platform}
+docker run --rm -u \$(id -u):\$(id -g) --entrypoint /var/lib/build/jenkins/ciscript.sh -w /var/lib/build -v `pwd`:/var/lib/build -v /home/ubuntu/.ssh:/home/mbedjenkins/.ssh ${platform}
 """
-                    }
                 }
             }
         }
