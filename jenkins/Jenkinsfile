@@ -1,3 +1,31 @@
+def platform_to_docker_label_map = [
+    "debian-i386" : "mbedtls && ubuntu-16.10-x64",
+    "debian-x64" : "mbedtls && ubuntu-16.10-x64"
+]
+
+def create_subjob( test_name, plaform ) {
+    def docker_lbl = platform_to_docker_label_map[plaform]
+    if( docker_lbl ) {
+        return {
+            node( docker_lbl ) {
+                timestamps {
+                    deleteDir()
+                    dir( 'src' ) {
+                        unstash 'src'
+                        sh """
+python cibuilder.py -e ${test_name}
+docker run --rm -u \$(id -u):\$(id -g) --entrypoint /var/lib/build/jenkins/ciscript.sh -w /var/lib/build -v `pwd`/src:/var/lib/build -v /home/ubuntu/.ssh:/home/mbedjenkins/.ssh ${platform}
+"""
+                    }
+                }
+            }
+        }
+    }
+    // if platform is docker. Find docker label
+    // Use plaform name to get docker image
+    // run script from the docker.
+    return null
+}
 
 node {
     deleteDir()
@@ -18,13 +46,22 @@ ls -ltr
 cd jenkins/
 python cibuilder.py -c ${job_name} -o tests.txt
     """
+    def jobs = [:]
     tests = readFile 'jenkins/tests.txt'
     def test_list = tests.split( '\n' )
     for( test in test_list) {
         def test_details = test.split( '\\|' )
         def test_name = test_details[0]
-        def label = test_details[1]
-        echo "${test_name} ${label}"
+        def platform = test_details[1]
+        echo "${test_name} ${platform}"
+        def job = create_subjob( test_name, platform )
+        if( job ){
+            jobs[test_name] = job
+        } else {
+            echo "Failed to create job for ${test_name} ${platform}"
+        }
+        jobs.failFast = false
+        parallel jobs
     }
 }
 
