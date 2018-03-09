@@ -4,6 +4,10 @@ platform_to_docker_label_map = [
     "debian-x64" : "mbedtls && ubuntu-16.10-x64"
 ]
 
+windows_labels = [
+    "windows-tls"
+]
+
 def create_subjob( test_name, plaform ) {
     def docker_lbl = platform_to_docker_label_map[plaform]
     if( docker_lbl ) {
@@ -21,11 +25,27 @@ docker run --rm -u \$(id -u):\$(id -g) --entrypoint /var/lib/build/jenkins/ciscr
                 }
             }
         }
+    } else { /* Normal label */
+        return {
+            node( platform ) {
+                timestamps {
+                    deleteDir()
+                    unstash 'src'
+                    if( platform in windows_labels ){
+                        bat """
+python cibuilder.py -e ${test_name}
+.\jenkins\ciscript.bat
+"""
+                    } else {
+                        sh """
+python cibuilder.py -e ${test_name}
+./jenkins/ciscript.sh
+"""
+                    }
+                }
+            }
+        }
     }
-    // if platform is docker. Find docker label
-    // Use plaform name to get docker image
-    // run script from the docker.
-    return null
 }
 
 node {
