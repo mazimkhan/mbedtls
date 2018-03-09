@@ -28,62 +28,19 @@ import sys
 import json
 from optparse import OptionParser
 
+CI_META_FILE="cijobs.json"
 SH_ENV_FILE="cienv.sh"
 BATCH_ENV_FILE="cienv.bat"
 
-ci_test_campaigns = {
-   "mbedtls-commit-tests": {
-       "make-gcc": {
-           "script": "make",
-           "environment": {"MAKE": "make", "CC": "gcc"},
-           "platforms": ["debian-9-i386", "debian-9-x64"],
 
-       },
-       "gmake-gcc": {
-           "script": "make",
-           "environment": {"MAKE": "gmake", "CC": "gcc"},
-           "platforms": ["debian-9-i386", "debian-9-x64"],
-       },
-       "cmake": {
-           "script": "cmake",
-           "environment": {"MAKE": "gmake", "CC": "gcc"},
-           "platforms": ["debian-9-i386", "debian-9-x64"],
-       },
-       "cmake-full":  {
-           "script": "cmake-full",
-           "environment": {"MAKE": "gmake", "CC": "gcc"},
-           "platforms": ["debian-9-i386", "debian-9-x64"],
-       },
-       "cmake-asan": {
-           "script": "cmake-asan",
-           "environment": {"MAKE": "gmake", "CC": "clang"},
-           "platforms": ["debian-9-i386", "debian-9-x64"],
-       },
-       "mingw-make": {
-           "script": "mingw-make",
-           "platforms": ["windows"],
-       },
-       "msvc12-32": {
-           "script": "msvc12-32",
-           "platforms": ["windows"],
-       },
-       "msvc12-64": {
-           "script": "msvc12-64",
-           "platforms": ["windows"],
-       }
-   },
-   "release_tests": {
-        "all.sh": {
-            "script": "./tests/scripts/all.sh",
-            "platforms": ["ubuntu-16.04-x64"]
-        }
-    }
-}
-
+def get_cidata():
+    with open(CI_META_FILE) as f:
+        cidata = json.load(f)
+    return cidata
 
 def check_scripts(campaign_name):
     try:
-        campaign = ci_test_campaigns[campaign_name]
+        campaign = get_cidata()[campaign_name]
     except KeyError:
         print("Error: Invalid campaign name")
         sys.exit(1)
@@ -148,7 +105,7 @@ def list_campaigns():
     
     :return: 
     """
-    for campaign in ci_test_campaigns:
+    for campaign in get_cidata():
         print(campaign)
 
 
@@ -160,7 +117,7 @@ def gen(test_to_generate):
     :param test_to_generate: 
     :return: 
     """
-    for campaign in ci_test_campaigns.keys():
+    for campaign in get_cidata().keys():
         for ci_test_name, test_name, environment, platform in check_scripts(campaign):
             if ci_test_name == test_to_generate:
                 if 'windows' in platform.lower():
