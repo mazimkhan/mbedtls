@@ -1,4 +1,5 @@
-def platform_to_docker_label_map = [
+
+platform_to_docker_label_map = [
     "debian-i386" : "mbedtls && ubuntu-16.10-x64",
     "debian-x64" : "mbedtls && ubuntu-16.10-x64"
 ]
