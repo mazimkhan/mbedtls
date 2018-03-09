@@ -57,6 +57,7 @@ node {
         submoduleCfg: [],
         userRemoteConfigs: [[credentialsId: "${env.GIT_CREDENTIALS_ID}",
         url: MBEDTLS_REPO]]])
+    stash 'src'
 
     //def job_name = "${env.JOB_NAME}"
     def job_name = "mbedtls-commit-tests"
