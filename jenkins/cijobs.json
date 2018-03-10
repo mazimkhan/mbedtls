@@ -8,17 +8,17 @@
        },
        "cmake": {
            "script": "cmake",
-           "environment": {"MAKE": "gmake", "CC": "gcc"},
+           "environment": {"MAKE": "make", "CC": "gcc"},
            "platforms": ["debian-i386", "debian-x64"]
        },
        "cmake-full":  {
            "script": "cmake-full",
-           "environment": {"MAKE": "gmake", "CC": "gcc"},
+           "environment": {"MAKE": "make", "CC": "gcc"},
            "platforms": ["debian-i386", "debian-x64"]
        },
        "cmake-asan": {
            "script": "cmake-asan",
-           "environment": {"MAKE": "gmake", "CC": "clang"},
+           "environment": {"MAKE": "make", "CC": "clang"},
            "platforms": ["debian-i386", "debian-x64"]
        },
        "gmake-clang": {
