@@ -38,6 +38,7 @@ echo set MBEDTLS_ROOT=. >> cienv.bat
 """
                     } else {
                         sh """
+ls -ltr /usr/local/bin/
 ./jenkins/cibuilder.py -e ${test_name}
 echo \"MBEDTLS_ROOT=.\" >> cienv.sh
 ./jenkins/ciscript.sh
