@@ -1,3 +1,4 @@
+#!/bin/env python3
 # CI Build spec generator
 #
 # Copyright (C) 2018, ARM Limited, All Rights Reserved
@@ -97,7 +98,7 @@ def list_tests(campaign, filename):
                 f.write("%s|%s\n" %(ci_test_name, platform))
     else:
         for ci_test_name, test_name, environment, platform in check_scripts(campaign):
-            print "%s|%s" %(ci_test_name, platform)
+            print("%s|%s" %(ci_test_name, platform))
 
 
 def list_campaigns():
