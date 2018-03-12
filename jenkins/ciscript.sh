@@ -56,13 +56,13 @@ elif [ "$TEST_NAME" = "cmake-full" ]; then
 elif [ "$TEST_NAME" = "cmake-asan" ]; then
     check_env CC MAKE
 
-    set +e
-    grep \"fno-sanitize-recover=undefined,integer\" CMakeLists.txt
-    if [ $? -ne 0 ]; 
-    then 
-        sed -i s/\"fno-sanitize-recover\"/\"fno-sanitize-recover=undefined,integer\"/ CMakeLists.txt; 
-    fi
-    set -e
+#    set +e
+#    grep \"fno-sanitize-recover=undefined,integer\" CMakeLists.txt
+#    if [ $? -ne 0 ]; 
+#    then 
+#        sed -i s/\"fno-sanitize-recover\"/\"fno-sanitize-recover=undefined,integer\"/ CMakeLists.txt; 
+#    fi
+#    set -e
 
     cmake -D CMAKE_BUILD_TYPE:String=ASan .
     ${MAKE}
