@@ -65,8 +65,8 @@ node {
 
     sh """
 pwd
-ls -ltr
 cd jenkins/
+ls -ltr
 ./cibuilder.py -c ${job_name} -o tests.txt
     """
     def jobs = [:]
