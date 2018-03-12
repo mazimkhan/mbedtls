@@ -1,4 +1,4 @@
-#!/bin/env python3
+#!/usr/bin/env python3
 # CI Build spec generator
 #
 # Copyright (C) 2018, ARM Limited, All Rights Reserved
