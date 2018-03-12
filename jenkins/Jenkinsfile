@@ -16,9 +16,20 @@ def create_subjob( test_name, platform ) {
                 timestamps {
                     deleteDir()
                     unstash 'src'
-                    sh """
+                    if( docker_lbl == "debian-i386" || docker_lbl == "debian-x64"){
+                        sh """
+export PYTHON=/usr/local/bin/python2.7
+python2 ./jenkins/cibuilder.py -e ${test_name}
+echo \"export PYTHON=/usr/local/bin/python2.7\" >> cienv.sh
+echo \"MBEDTLS_ROOT=.\" >> cienv.sh
+"""
+                    } else {
+                        sh """
 ./jenkins/cibuilder.py -e ${test_name}
 echo \"MBEDTLS_ROOT=.\" >> cienv.sh
+"""
+                    }
+                    sh """
 docker run --rm -u \$(id -u):\$(id -g) --entrypoint /var/lib/build/jenkins/ciscript.sh -w /var/lib/build -v `pwd`:/var/lib/build -v /home/ubuntu/.ssh:/home/mbedjenkins/.ssh ${platform}
 """
                 }
