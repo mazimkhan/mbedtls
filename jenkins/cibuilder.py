@@ -47,7 +47,7 @@ def check_scripts(campaign_name):
         print("Error: Invalid campaign name")
         sys.exit(1)
 
-    for test_name, details in campaign.iteritems():
+    for test_name, details in campaign.items():
         for platform in details["platforms"]:
             ci_test_name = "%s-%s" %(test_name, platform)
             yield ci_test_name, details['script'], details.get('environment', None), platform
@@ -63,7 +63,7 @@ def gen_sh_env_file(test_name, environment):
     """
     with open(SH_ENV_FILE, 'w') as f:
         if environment:
-            for k, v in environment.iteritems():
+            for k, v in environment.items():
                 f.write("%s=%s\n" % (k, v))
         f.write("%s=%s\n" % ('TEST_NAME', test_name))
         os.chmod(SH_ENV_FILE, 0o777)
@@ -79,7 +79,7 @@ def gen_bat_env_file(test_name, environment):
     """
     with open('cienv.bat', 'w') as f:
         if environment:
-            for k, v in environment.iteritems():
+            for k, v in environment.items():
                 f.write("set %s=%s\n" % (k, v))
         f.write("set %s=%s\n" % ('TEST_NAME', test_name))
 
