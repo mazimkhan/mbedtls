@@ -17,7 +17,7 @@ def create_subjob( test_name, platform ) {
                     deleteDir()
                     unstash 'src'
                     sh """
-python jenkins/cibuilder.py -e ${test_name}
+./jenkins/cibuilder.py -e ${test_name}
 echo \"MBEDTLS_ROOT=.\" >> cienv.sh
 docker run --rm -u \$(id -u):\$(id -g) --entrypoint /var/lib/build/jenkins/ciscript.sh -w /var/lib/build -v `pwd`:/var/lib/build -v /home/ubuntu/.ssh:/home/mbedjenkins/.ssh ${platform}
 """
@@ -38,7 +38,7 @@ echo set MBEDTLS_ROOT=. >> cienv.bat
 """
                     } else {
                         sh """
-python jenkins/cibuilder.py -e ${test_name}
+./jenkins/cibuilder.py -e ${test_name}
 echo \"MBEDTLS_ROOT=.\" >> cienv.sh
 ./jenkins/ciscript.sh
 """
@@ -67,7 +67,7 @@ node {
 pwd
 ls -ltr
 cd jenkins/
-python cibuilder.py -c ${job_name} -o tests.txt
+./cibuilder.py -c ${job_name} -o tests.txt
     """
     def jobs = [:]
     tests = readFile 'jenkins/tests.txt'
