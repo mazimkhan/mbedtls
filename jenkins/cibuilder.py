@@ -53,35 +53,23 @@ def check_scripts(campaign_name):
             yield ci_test_name, details['script'], details.get('environment', None), platform
 
 
-def gen_sh_env_file(test_name, environment):
+def gen_env_file(test_name, environment, set_cmd, env_file):
     """
-    Generate environment script for ciscript.sh.
+    Generate environment script env_file using specified environment set
+    command.
     
     :param test_name:
     :param environment:
+    :param set_cmd:
+    :param env_file:
     :return: 
     """
-    with open(SH_ENV_FILE, 'w') as f:
+    with open(env_file, 'w') as f:
         if environment:
             for k, v in environment.items():
-                f.write("%s=%s\n" % (k, v))
-        f.write("%s=%s\n" % ('TEST_NAME', test_name))
+                f.write("%s %s=%s\n" % (set_cmd, k, v))
+        f.write("%s %s=%s\n" % (set_cmd, 'TEST_NAME', test_name))
         os.chmod(SH_ENV_FILE, 0o777)
-
-
-def gen_bat_env_file(test_name, environment):
-    """
-    Generate environment script for ciscript.bat.
-    
-    :param test_name:
-    :param environment: 
-    :return: 
-    """
-    with open('cienv.bat', 'w') as f:
-        if environment:
-            for k, v in environment.items():
-                f.write("set %s=%s\n" % (k, v))
-        f.write("set %s=%s\n" % ('TEST_NAME', test_name))
 
 
 def list_tests(campaign, filename):
@@ -123,9 +111,9 @@ def gen(test_to_generate):
         for ci_test_name, test_name, environment, platform in check_scripts(campaign):
             if ci_test_name == test_to_generate:
                 if 'windows' in platform.lower():
-                    gen_bat_env_file(test_name, environment)
+                    gen_env_file(test_name, environment, "set", BATCH_ENV_FILE)
                 else:
-                    gen_sh_env_file(test_name, environment)
+                    gen_env_file(test_name, environment, "export", SH_ENV_FILE)
                 return
     print("Error: Campaign or test not found!")
     sys.exit(1)
