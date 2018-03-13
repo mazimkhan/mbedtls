@@ -45,10 +45,58 @@
        }
    },
    "release_tests": {
-        "all.sh": {
-            "script": "./tests/scripts/all.sh",
-            "platforms": ["ubuntu-16.04-x64"]
-        }
+       "all.sh": {
+           "script": "all.sh",
+           "platforms": ["ubuntu-16.04-x64"]
+       }
+   },
+   "nightly": {
+       "make-gcc": {
+           "script": "make",
+           "environment": {"MAKE": "make", "CC": "gcc"},
+           "platforms": ["debian-i386", "debian-x64"]
+       },
+       "cmake": {
+           "script": "cmake",
+           "environment": {"MAKE": "make", "CC": "gcc"},
+           "platforms": ["debian-i386", "debian-x64"]
+       },
+       "cmake-full":  {
+           "script": "cmake-full",
+           "environment": {"MAKE": "make", "CC": "gcc"},
+           "platforms": ["debian-i386", "debian-x64"]
+       },
+       "cmake-asan": {
+           "script": "cmake-asan",
+           "environment": {"MAKE": "make", "CC": "clang"},
+           "platforms": ["debian-i386", "debian-x64"]
+       },
+       "gmake-clang": {
+           "script": "make",
+           "environment": {"MAKE": "gmake", "CC": "clang"},
+           "platforms": ["freebsd"]
+       },
+       "cmake-clang": {
+           "script": "cmake",
+           "environment": {"MAKE": "make", "CC": "clang"},
+           "platforms": ["freebsd"]
+       },
+       "mingw-make": {
+           "script": "mingw-make",
+           "platforms": ["windows-tls"]
+       },
+       "msvc12-32": {
+           "script": "msvc12-32",
+           "platforms": ["windows-tls"]
+       },
+       "msvc12-64": {
+           "script": "msvc12-64",
+           "platforms": ["windows-tls"]
+       },
+       "all.sh": {
+           "script": "all.sh",
+           "platforms": ["ubuntu-16.04-x64"]
+       }
     }
 }
 

@@ -74,6 +74,17 @@ elif [ "$TEST_NAME" = "cmake-asan" ]; then
     ./tests/ssl-opt.sh
     ./tests/scripts/test-ref-configs.pl
 
+elif [ "$TEST_NAME" = "all.sh" ]; then
+
+    if [ ! -d .git ]
+    then
+        git config --global user.email "you@example.com"
+        git config --global user.name "Your Name"
+        git init
+        git add .
+        git commit -m "CI code copy"
+    fi
+    ./tests/scripts/all.sh -r -k --no-yotta
 else
     echo "Error: Unknown test \"$TEST_NAME\"!"
     exit 1
