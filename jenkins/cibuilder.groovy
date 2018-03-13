@@ -61,7 +61,6 @@ echo \"MBEDTLS_ROOT=.\" >> cienv.sh
         }
     }
 }
-*/
 
 @NonCPS
 def create_parallel_jobs( campaign, src_stash_name ){
@@ -71,9 +70,9 @@ def create_parallel_jobs( campaign, src_stash_name ){
     def branches = [:]
     tests = readFile 'jenkins/tests.txt'
     def test_list = tests.split( '\n' )
-    /* Use C style loop as it is serializable and allow calling this function
-     * after loading this script from Jenkins groovy.
-     */
+    // Use C style loop as it is serializable and allow calling this function
+    // after loading this script from Jenkins groovy.
+    //
     for( int i = 0; i < test_list.size(); i++ ) {
         def test_details = test.split( '\\|' )
         def test_name = test_details[0]
@@ -88,5 +87,6 @@ def create_parallel_jobs( campaign, src_stash_name ){
     branches.failFast = false
     return branches
 }
+*/
 
 return this
