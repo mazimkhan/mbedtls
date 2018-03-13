@@ -9,7 +9,9 @@ windows_labels = [
     "windows-tls"
 ]
 
+/*
 @NonCPS
+
 def create_subjob( test_name, platform, src_stash_name ) {
     def docker_lbl = platform_to_docker_label_map[platform]
     if( docker_lbl ) {
@@ -26,7 +28,7 @@ docker run --rm -u \$(id -u):\$(id -g) --entrypoint /var/lib/build/jenkins/ciscr
                 }
             }
         }
-    } else { /* Normal label */
+    } else {
         return {
             node( platform ) {
                 timestamps {
@@ -59,6 +61,7 @@ echo \"MBEDTLS_ROOT=.\" >> cienv.sh
         }
     }
 }
+*/
 
 @NonCPS
 def create_parallel_jobs( campaign, src_stash_name ){
@@ -83,7 +86,6 @@ def create_parallel_jobs( campaign, src_stash_name ){
         }
     }
     branches.failFast = false
-    branches = null
     return branches
 }
 
