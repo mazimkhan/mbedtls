@@ -10,34 +10,43 @@ if not exist %ENV_FILE% (
 
 call %ENV_FILE%
 
-call :check_env TEST_NAME MBEDTLS_ROOT || goto :error
+call :check_env TEST_NAME BUILD MBEDTLS_ROOT || goto :error
 
 cd %MBEDTLS_ROOT%
 
-if "%TEST_NAME%"=="mingw-make" (
+if "%BUILD%"=="mingw-make" (
     cmake . -G "MinGW Makefiles" -DCMAKE_C_COMPILER="gcc"
     mingw32-make clean
     mingw32-make
 
-) else if "%TEST_NAME%"=="msvc12-32" (
+) else if "%BUILD%"=="msvc12-32" (
     call "C:\\Program Files (x86)\\Microsoft Visual Studio 12.0\\VC\\vcvarsall.bat"
     cmake . -G "Visual Studio 12"
     MSBuild ALL_BUILD.vcxproj
 
-) else if "%TEST_NAME%"=="msvc12-64" (
+) else if "%BUILD%"=="msvc12-64" (
     call "C:\\Program Files (x86)\\Microsoft Visual Studio 12.0\\VC\\vcvarsall.bat"
     cmake . -G "Visual Studio 12 Win64"
     MSBuild ALL_BUILD.vcxproj
 
-) else if "%TEST_NAME%"=="mingw-iar8" (
+) else if "%BUILD%"=="mingw-iar8" (
     perl scripts\config.pl baremetal
     cmake -D CMAKE_BUILD_TYPE:String=Check -DCMAKE_C_COMPILER="iccarm" -G "MinGW Makefiles" .
     mingw32-make lib
 
 ) else (
-    echo "Error: Invalid test %TEST_NAME%!"
+    echo "Error: Invalid build %BUILD%!"
+    goto :error
 )
 
+if "%RUN_BASIC_TEST%"=="1" (
+    if "%BUILD%"=="mingw-make" (
+        ctest -vv
+    ) else (
+        echo "Error: Basic tests only available under build: mingw-make!"
+        goto :error
+    )
+)
 
 goto :EOF
 

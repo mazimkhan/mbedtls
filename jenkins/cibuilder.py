@@ -50,25 +50,29 @@ def check_scripts(campaign_name):
     for test_name, details in campaign.items():
         for platform in details["platforms"]:
             ci_test_name = "%s-%s" %(test_name, platform)
-            yield ci_test_name, details['script'], details.get('environment', None), platform
+            yield ci_test_name, details['build'], details.get('environment', {}), details.get('tests', []), platform
 
 
-def gen_env_file(test_name, environment, set_cmd, env_file):
+def gen_env_file(test_name, build_name, environment, tests, set_cmd, env_file):
     """
     Generate environment script env_file using specified environment set
     command.
     
     :param test_name:
+    :param build_name:
     :param environment:
+    :param tests:
     :param set_cmd:
     :param env_file:
     :return: 
     """
     with open(env_file, 'w') as f:
-        if environment:
-            for k, v in environment.items():
-                f.write("%s %s=%s\n" % (set_cmd, k, v))
+        for k, v in environment.items():
+            f.write("%s %s=%s\n" % (set_cmd, k, v))
         f.write("%s %s=%s\n" % (set_cmd, 'TEST_NAME', test_name))
+        f.write("%s %s=%s\n" % (set_cmd, 'BUILD', build_name))
+        for test in tests:
+            f.write("%s %s=%s\n" % (set_cmd, 'RUN_%s_TEST' % test.upper(), '1'))
         os.chmod(SH_ENV_FILE, 0o777)
 
 
@@ -82,11 +86,11 @@ def list_tests(campaign, filename):
     """
     if filename:
         with open(filename, 'w') as f:
-            for ci_test_name, test_name, environment, platform in check_scripts(campaign):
-                f.write("%s|%s\n" %(ci_test_name, platform))
+            for test_name, build_name, environment, tests, platform in check_scripts(campaign):
+                f.write("%s|%s\n" %(test_name, platform))
     else:
-        for ci_test_name, test_name, environment, platform in check_scripts(campaign):
-            print("%s|%s" %(ci_test_name, platform))
+        for test_name, build_name, environment, tests, platform in check_scripts(campaign):
+            print("%s|%s" %(test_name, platform))
 
 
 def list_campaigns():
@@ -108,12 +112,12 @@ def gen(test_to_generate):
     :return: 
     """
     for campaign in get_cidata().keys():
-        for ci_test_name, test_name, environment, platform in check_scripts(campaign):
-            if ci_test_name == test_to_generate:
+        for test_name, build_name, environment, tests, platform in check_scripts(campaign):
+            if test_name == test_to_generate:
                 if 'windows' in platform.lower():
-                    gen_env_file(test_name, environment, "set", BATCH_ENV_FILE)
+                    gen_env_file(test_name, build_name, environment, tests, "set", BATCH_ENV_FILE)
                 else:
-                    gen_env_file(test_name, environment, "export", SH_ENV_FILE)
+                    gen_env_file(test_name, build_name, environment, tests, "export", SH_ENV_FILE)
                 return
     print("Error: Campaign or test not found!")
     sys.exit(1)

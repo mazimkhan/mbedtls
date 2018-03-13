@@ -19,41 +19,26 @@ check_env(){
 }
 
 . ./cienv.sh
-check_env TEST_NAME MBEDTLS_ROOT
+check_env TEST_NAME BUILD MBEDTLS_ROOT
 
 cd ${MBEDTLS_ROOT}
 
-if [ "$TEST_NAME" = "make" ]; then
+################################################################
+#### Perform build step
+################################################################
+
+if [ "$BUILD" = "make" ]; then
     check_env CC MAKE
     ${MAKE} clean
     ${MAKE}
-    ${MAKE} check
-    ./programs/test/selftest
 
-elif [ "$TEST_NAME" = "cmake" ]; then
-    check_env CC MAKE
-    cmake -D CMAKE_BUILD_TYPE:String=Check .
-    ${MAKE} clean
-    ${MAKE}
-    ${MAKE} test
-    ./programs/test/selftest
-
-elif [ "$TEST_NAME" = "cmake-full" ]; then
+elif [ "$BUILD" = "cmake" ]; then
     check_env CC MAKE
     cmake -D CMAKE_BUILD_TYPE:String=Check .
     ${MAKE} clean
     ${MAKE}
-    ${MAKE} test
-    ./programs/test/selftest
-    openssl version
-    gnutls-serv -v
-    #export PATH=/usr/local/openssl-1.0.2g/bin:/usr/local/gnutls-3.4.10/bin:$PATH
-    export SEED=1
-    ./tests/compat.sh
-    ./tests/ssl-opt.sh
-    ./tests/scripts/test-ref-configs.pl
 
-elif [ "$TEST_NAME" = "cmake-asan" ]; then
+elif [ "$BUILD" = "cmake-asan" ]; then
     check_env CC MAKE
 
     set +e
@@ -66,15 +51,8 @@ elif [ "$TEST_NAME" = "cmake-asan" ]; then
 
     cmake -D CMAKE_BUILD_TYPE:String=ASan .
     ${MAKE}
-    ${MAKE} test
-    ./programs/test/selftest
-    #export PATH=/usr/local/openssl-1.0.2g/bin:/usr/local/gnutls-3.4.10/bin:$PATH
-    export SEED=1
-    ./tests/compat.sh
-    ./tests/ssl-opt.sh
-    ./tests/scripts/test-ref-configs.pl
 
-elif [ "$TEST_NAME" = "all.sh" ]; then
+elif [ "$BUILD" = "all.sh" ]; then
 
     if [ ! -d .git ]
     then
@@ -85,8 +63,29 @@ elif [ "$TEST_NAME" = "all.sh" ]; then
         git commit -m "CI code copy"
     fi
     ./tests/scripts/all.sh -r -k --no-yotta
+
 else
-    echo "Error: Unknown test \"$TEST_NAME\"!"
+    echo "Error: Unknown build \"$BUILD\"!"
     exit 1
+fi
+
+################################################################
+#### Perform tests
+################################################################
+
+if [ "$RUN_BASIC_TEST" = "1" ]; then
+    ctest -vv
+    ./programs/test/selftest
+fi
+
+if [ "$RUN_FULL_TEST" = "1" ]; then
+    ctest -vv
+    ./programs/test/selftest
+    openssl version
+    gnutls-serv -v
+    export SEED=1
+    ./tests/compat.sh
+    ./tests/ssl-opt.sh
+    ./tests/scripts/test-ref-configs.pl
 fi
 
