@@ -64,7 +64,7 @@ def create_parallel_jobs( campaign, src_stash_name ){
 ./jenkins/cibuilder.py -c ${campaign} -o tests.txt
     """
     def branches = [:]
-    tests = readFile 'jenkins/tests.txt'
+    tests = readFile 'tests.txt'
     def test_list = tests.split( '\n' )
     // Use C style loop as it is serializable and allow calling this function
     // after loading this script from Jenkins groovy.
