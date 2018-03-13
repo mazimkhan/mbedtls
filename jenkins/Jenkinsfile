@@ -16,19 +16,9 @@ def create_subjob( test_name, platform ) {
                 timestamps {
                     deleteDir()
                     unstash 'src'
-                    if( platform == "debian-i386" || platform == "debian-x64"){
-                        sh """
-/usr/local/bin/python2.7 ./jenkins/cibuilder.py -e ${test_name}
-echo \"export PYTHON=/usr/local/bin/python2.7\" >> cienv.sh
-echo \"MBEDTLS_ROOT=.\" >> cienv.sh
-"""
-                    } else {
-                        sh """
+                    sh """
 ./jenkins/cibuilder.py -e ${test_name}
 echo \"MBEDTLS_ROOT=.\" >> cienv.sh
-"""
-                    }
-                    sh """
 docker run --rm -u \$(id -u):\$(id -g) --entrypoint /var/lib/build/jenkins/ciscript.sh -w /var/lib/build -v `pwd`:/var/lib/build -v /home/ubuntu/.ssh:/home/mbedjenkins/.ssh ${platform}
 """
                 }
@@ -47,9 +37,17 @@ echo set MBEDTLS_ROOT=. >> cienv.bat
 .\\jenkins\\ciscript.bat
 """
                     } else {
-                        sh """
-ls -ltr /usr/local/bin/
+                        if( platform == "freebsd" ){
+                            sh """
+/usr/local/bin/python2.7 ./jenkins/cibuilder.py -e ${test_name}
+echo \"export PYTHON=/usr/local/bin/python2.7\" >> cienv.sh
+"""
+                        } else {
+                            sh """
 ./jenkins/cibuilder.py -e ${test_name}
+"""
+                        }
+                        sh """
 echo \"MBEDTLS_ROOT=.\" >> cienv.sh
 ./jenkins/ciscript.sh
 """
