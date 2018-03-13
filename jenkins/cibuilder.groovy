@@ -63,12 +63,11 @@ def create_parallel_jobs( campaign, src_stash_name ){
     sh """
 ./jenkins/cibuilder.py -c ${campaign} -o tests.txt
     """
-    def branches = [:]
+    def test_jobs = [:]
     tests = readFile 'tests.txt'
     def test_list = tests.split( '\n' )
-    // Use C style loop as it is serializable and allow calling this function
-    // after loading this script from Jenkins groovy.
-    //
+    /* Use C style loop as it is serializable and allow calling this function
+     * after loading this script from Jenkins groovy. */
     for( int i = 0; i < test_list.size(); i++ ) {
         def test = test_list[i]
         def test_details = test.split( '\\|' )
@@ -76,12 +75,12 @@ def create_parallel_jobs( campaign, src_stash_name ){
         def platform = test_details[1]
         def job = create_subjob( test_name, platform, src_stash_name )
         if( job ){
-            branches[test_name] = job
+            test_jobs[test_name] = job
         } else {
             echo "Failed to create job for ${test_name} ${platform}"
         }
     }
-    return branches
+    return test_jobs
 }
 
 return this
