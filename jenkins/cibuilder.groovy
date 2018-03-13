@@ -60,6 +60,7 @@ echo \"MBEDTLS_ROOT=.\" >> cienv.sh
     }
 }
 
+@NonCPS
 def create_parallel_jobs( campaign, src_stash_name ){
     sh """
 ./jenkins/cibuilder.py -c ${campaign} -o tests.txt
