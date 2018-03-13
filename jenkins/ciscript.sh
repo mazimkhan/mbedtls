@@ -57,10 +57,10 @@ elif [ "$TEST_NAME" = "cmake-asan" ]; then
     check_env CC MAKE
 
     set +e
-    grep \"fno-sanitize-recover=undefined,integer\" CMakeLists.txt
+    grep "fno-sanitize-recover=undefined,integer" CMakeLists.txt
     if [ $? -ne 0 ]
     then
-        sed -i s/\"fno-sanitize-recover\"/\"fno-sanitize-recover=undefined,integer\"/ CMakeLists.txt
+        sed -i s/"fno-sanitize-recover"/"fno-sanitize-recover=undefined,integer"/ CMakeLists.txt
     fi
     set -e
 
