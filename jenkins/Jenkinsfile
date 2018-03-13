@@ -16,7 +16,7 @@ def create_subjob( test_name, platform ) {
                 timestamps {
                     deleteDir()
                     unstash 'src'
-                    if( docker_lbl == "debian-i386" || docker_lbl == "debian-x64"){
+                    if( platform == "debian-i386" || platform == "debian-x64"){
                         sh """
 /usr/local/bin/python2.7 ./jenkins/cibuilder.py -e ${test_name}
 echo \"export PYTHON=/usr/local/bin/python2.7\" >> cienv.sh
