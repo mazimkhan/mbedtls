@@ -81,7 +81,6 @@ def create_parallel_jobs( campaign, src_stash_name ){
             echo "Failed to create job for ${test_name} ${platform}"
         }
     }
-    branches.failFast = false
     return branches
 }
 
