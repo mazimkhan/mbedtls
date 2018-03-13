@@ -10,8 +10,8 @@ node {
         url: MBEDTLS_REPO]]])
     stash 'src'
 
-    def Jenkinsfile = load "${rootDir}@script/Jenkinsfile"
-    def branches = Jenkinsfile.create_parallel_jobs( "nightly" )
+    def cibuilder = load "${rootDir}@script/cibuilder.groovy"
+    def branches = cibuilder.create_parallel_jobs( "nightly" )
 
     parallel branches
 }
