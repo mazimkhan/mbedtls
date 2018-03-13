@@ -9,6 +9,7 @@ windows_labels = [
     "windows-tls"
 ]
 
+@NonCPS
 def create_subjob( test_name, platform, src_stash_name ) {
     def docker_lbl = platform_to_docker_label_map[platform]
     if( docker_lbl ) {
