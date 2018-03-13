@@ -70,6 +70,7 @@ def create_parallel_jobs( campaign, src_stash_name ){
     // after loading this script from Jenkins groovy.
     //
     for( int i = 0; i < test_list.size(); i++ ) {
+        def test = test_list[i]
         def test_details = test.split( '\\|' )
         def test_name = test_details[0]
         def platform = test_details[1]
