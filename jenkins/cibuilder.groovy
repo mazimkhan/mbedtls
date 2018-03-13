@@ -9,9 +9,6 @@ windows_labels = [
     "windows-tls"
 ]
 
-/*
-@NonCPS
-
 def create_subjob( test_name, platform, src_stash_name ) {
     def docker_lbl = platform_to_docker_label_map[platform]
     if( docker_lbl ) {
@@ -62,7 +59,6 @@ echo \"MBEDTLS_ROOT=.\" >> cienv.sh
     }
 }
 
-@NonCPS
 def create_parallel_jobs( campaign, src_stash_name ){
     sh """
 ./jenkins/cibuilder.py -c ${campaign} -o tests.txt
@@ -87,6 +83,5 @@ def create_parallel_jobs( campaign, src_stash_name ){
     branches.failFast = false
     return branches
 }
-*/
 
 return this
