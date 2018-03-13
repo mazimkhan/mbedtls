@@ -9,14 +9,14 @@ windows_labels = [
     "windows-tls"
 ]
 
-def create_branch( test_name, platform ) {
+def create_subjob( test_name, platform, src_stash_name ) {
     def docker_lbl = platform_to_docker_label_map[platform]
     if( docker_lbl ) {
         return {
             node( docker_lbl ) {
                 timestamps {
                     deleteDir()
-                    unstash 'src'
+                    unstash src_stash_name
                     sh """
 ./jenkins/cibuilder.py -e ${test_name}
 echo \"MBEDTLS_ROOT=.\" >> cienv.sh
@@ -30,7 +30,7 @@ docker run --rm -u \$(id -u):\$(id -g) --entrypoint /var/lib/build/jenkins/ciscr
             node( platform ) {
                 timestamps {
                     deleteDir()
-                    unstash 'src'
+                    unstash src_stash_name
                     if( platform in windows_labels ){
                         bat """
 python jenkins\\cibuilder.py -e ${test_name}
@@ -59,7 +59,7 @@ echo \"MBEDTLS_ROOT=.\" >> cienv.sh
     }
 }
 
-def create_branches( campaign ){
+def create_parallel_jobs( campaign, src_stash_name ){
     sh """
 ./jenkins/cibuilder.py -c ${campaign} -o tests.txt
     """
@@ -70,7 +70,7 @@ def create_branches( campaign ){
         def test_details = test.split( '\\|' )
         def test_name = test_details[0]
         def platform = test_details[1]
-        def job = create_subjob( test_name, platform )
+        def job = create_subjob( test_name, platform, src_stash_name )
         if( job ){
             branches[test_name] = job
         } else {
