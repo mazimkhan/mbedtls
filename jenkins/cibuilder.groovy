@@ -83,6 +83,7 @@ def create_parallel_jobs( campaign, src_stash_name ){
         }
     }
     branches.failFast = false
+    branches = null
     return branches
 }
 
