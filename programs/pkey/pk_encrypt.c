@@ -27,9 +27,7 @@
 
 #if defined(MBEDTLS_PLATFORM_C)
 #include "mbedtls/platform.h"
-in_platform
 #else
-in_else
 #include <stdio.h>
 #define mbedtls_fprintf    fprintf
 #define mbedtls_printf     printf
@@ -143,6 +141,10 @@ int main( int argc, char *argv[] )
     {
         int len = 0;
         char write_buf[5];
+#if !defined(MBEDTLS_PLATFORM_NO_STD_FUNCTIONS)
+        printf("Hello World!\r\n");
+        stdio_should_be_included
+#endif
         len = snprintf( write_buf, sizeof( write_buf ), "%02X%s", buf[i],
                  ( i + 1 ) % 16 == 0 ? "\r\n" : " " );
         mbedtls_fwrite(write_buf, len, f);
