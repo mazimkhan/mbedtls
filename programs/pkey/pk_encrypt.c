@@ -27,7 +27,9 @@
 
 #if defined(MBEDTLS_PLATFORM_C)
 #include "mbedtls/platform.h"
+in_platform
 #else
+in_else
 #include <stdio.h>
 #define mbedtls_fprintf    fprintf
 #define mbedtls_printf     printf
