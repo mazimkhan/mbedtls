@@ -267,8 +267,24 @@
             "script": "./scripts/output_env.sh",
             "platforms": ["ubuntu-16.04-x64"]
         },
-        "source-checks": {
-            "build": "source-checks",
+        "check-recursion": {
+            "script": "./tests/scripts/recursion.pl library/*.c",
+            "platforms": ["ubuntu-16.04-x64"]
+        },
+        "check-generated-files": {
+            "script": "./tests/scripts/check-generated-files.sh",
+            "platforms": ["ubuntu-16.04-x64"]
+        },
+        "check-doxy-blocks": {
+            "script": "./tests/scripts/check-doxy-blocks.pl",
+            "platforms": ["ubuntu-16.04-x64"]
+        },
+        "check-names": {
+            "script": "./tests/scripts/check-names.sh",
+            "platforms": ["ubuntu-16.04-x64"]
+        },
+        "check-doxygen": {
+            "script": "./tests/scripts/doxygen.sh",
             "platforms": ["ubuntu-16.04-x64"]
         }
     },
@@ -277,7 +293,7 @@
                 "make-gcc", "cmake", "cmake-full", "cmake-asan", "gmake-clang",
                 "cmake-clang", "mingw-make", "msvc12-32", "msvc12-64"],
         "release-tests": ["all.sh"],
-        "all-tests": ["print-environment", "source-checks", "cmake-asan-gcc",
+        "all-tests": ["print-environment", "cmake-asan-gcc",
                       "cmake-clang-full-config", "cmake-asan-gcc-sslv3",
                       "cmake-asan-gcc-no-renegotiation", "curves",
                       "keyexchanges", "unix-make", "make-full-config",
@@ -290,7 +306,9 @@
                       "make-allow-sha1-certs", "cmake-asan-rsa-no-crt",
                       "cross-build-windows", "cross-build-tests-windows",
                       "cross-build-dll", "cross-build-tests-dll",
-                      "cmake-memsan", "cmake-release", "cmake-out-of-src"]
+                      "cmake-memsan", "cmake-release", "cmake-out-of-src",
+                      "check-recursion", "check-generated-files",
+                      "check-doxy-blocks", "check-names", "check-doxygen"]
     },
     "jobs": {
         "mbedtls-commit-tests": {
