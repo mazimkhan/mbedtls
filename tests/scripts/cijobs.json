@@ -284,7 +284,7 @@
             "campaigns": ["commit-tests"]
         },
         "release-tests": {
-            "campaigns": ["release-tests", "all-tests"]
+            "campaigns": ["all-tests"]
         },
         "nightly": {
             "campaigns": ["commit-tests", "release-tests"]
