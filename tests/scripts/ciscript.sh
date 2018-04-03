@@ -443,12 +443,25 @@ if [ "$RUN_SSL_OPT_TEST" = "1" ]; then
 fi
 
 if [ "$RUN_SSL_OPT_SHA1_TEST" = "1" ]; then
-    ./tests/ssl-opt.sh -f SHA-1
+    ./tests/ssl-opt.sh -f "SHA-1"
+fi
+
+if [ "$RUN_SSL_OPT_MFL_TEST" = "1" ]; then
+    ./tests/ssl-opt.sh -f "Max fragment length"
+fi
+
+if [ "$RUN_SSL_OPT_MEMCHECK_TEST" = "1" ]; then
+    ./tests/ssl-opt.sh --memcheck
 fi
 
 if [ "$RUN_COMPAT_TEST" = "1" ]; then
     export SEED=1
     tests/compat.sh
+fi
+
+if [ "$RUN_COMPAT_MEMCHECK_TEST" = "1" ]; then
+    export SEED=1
+    tests/compat.sh --memcheck
 fi
 
 if [ "$RUN_COMPAT_RC4_DES_NULL_TEST" = "1" ]; then
