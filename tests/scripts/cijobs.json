@@ -8,31 +8,31 @@
         },
         "unix-make": {
             "build": "make",
-            "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "-Werror -Wall -Wextra -Os"},
+            "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "'-Werror -Wall -Wextra -Os'"},
             "platforms": ["ubuntu-16.04-x64"]
         },
         "make-no-std-func-nv-seed": {
             "config": "full-config-no-std-func-nv-seed",
             "build": "make",
-            "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "-Werror -Wall -Wextra -O0"},
+            "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "'-Werror -Wall -Wextra -O0'"},
             "platforms": ["ubuntu-16.04-x64"]
         },
         "make-no-srv": {
             "config": "full-config-no-srv",
             "build": "make",
-            "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "-Werror -Wall -Wextra -O0"},
+            "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "'-Werror -Wall -Wextra -O0'"},
             "platforms": ["ubuntu-16.04-x64"]
         },
         "make-no-client": {
             "config": "full-config-no-cli",
             "build": "make",
-            "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "-Werror -Wall -Wextra -O0"},
+            "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "'-Werror -Wall -Wextra -O0'"},
             "platforms": ["ubuntu-16.04-x64"]
         },
         "make-no-net-entropy": {
             "config": "full-config-no-net-entropy",
             "build": "make-lib",
-            "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "-Werror -Wall -Wextra -O0 -std=c99 -pedantic"},
+            "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "'-Werror -Wall -Wextra -O0 -std=c99 -pedantic'"},
             "platforms": ["ubuntu-16.04-x64"]
         },
         "make-full-config": {
@@ -47,13 +47,13 @@
         },
         "make-i386-on-x64": {
             "build": "make-on-x64",
-            "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "\"-Werror -Wall -Wextra -m32\""},
+            "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "'-Werror -Wall -Wextra -m32'"},
             "tests": ["basic"],
             "platforms": ["ubuntu-16.04-x64"]
         },
         "make-ilp32-on-x64": {
             "build": "make-on-x64",
-            "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "\"-Werror -Wall -Wextra -mx32\""},
+            "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "'-Werror -Wall -Wextra -mx32'"},
             "tests": ["basic"],
             "platforms": ["ubuntu-16.04-x64"]
         },
@@ -61,7 +61,7 @@
             "config": "bignum-limbs",
             "build": "make",
             "environment": {"MAKE": "make", "CC": "gcc",
-                            "CFLAGS": "\"-Werror -Wall -Wextra -DMBEDTLS_HAVE_INT32\""},
+                            "CFLAGS": "'-Werror -Wall -Wextra -DMBEDTLS_HAVE_INT32'"},
             "tests": ["basic"],
             "platforms": ["ubuntu-16.04-x64"]
         },
@@ -69,7 +69,7 @@
             "config": "bignum-limbs",
             "build": "make",
             "environment": {"MAKE": "make", "CC": "gcc",
-                            "CFLAGS": "\"-Werror -Wall -Wextra -DMBEDTLS_HAVE_INT64\""},
+                            "CFLAGS": "'-Werror -Wall -Wextra -DMBEDTLS_HAVE_INT64'"},
             "tests": ["basic"],
             "platforms": ["ubuntu-16.04-x64"]
         },
@@ -87,14 +87,14 @@
             "environment": {"MAKE": "make", "CC": "arm-none-eabi-gcc",
                             "AR": "arm-none-eabi-ar", "LD": "arm-none-eabi-ld",
                             "CFLAGS": "'-Werror -Wall -Wextra'"},
-            "tests": ["no-64bit-div"],
+            "tests": ["no_64bit_div"],
             "platforms": ["ubuntu-16.04-x64"]
         },
         "make-arm5": {
             "config": "baremetal-for-arm",
             "build": "make-lib",
-            "environment": {"MAKE": "make", "CC": "ARMC5_CC",
-                            "AR": "ARMC5_AR",
+            "environment": {"MAKE": "make", "CC": "$ARMC5_CC",
+                            "AR": "$ARMC5_AR",
                             "WARNING_CFLAGS": "'--strict --c99'"},
             "tests": ["armc6_build_tests"],
             "platforms": ["ubuntu-16.04-x64"]
@@ -212,14 +212,13 @@
             "config": "full-config-no-mem-backtrace",
             "build": "cmake",
             "environment": {"MAKE": "make", "CC": "clang",
-                            "CFLAGS": "\"-Werror -Wall -Wextra -std=c99 -pedantic\""},
+                            "CFLAGS": "'-Werror -Wall -Wextra -std=c99 -pedantic'"},
             "tests": ["basic", "ssl_opt", "compat_rc4_des_null"],
             "platforms": ["ubuntu-16.04-x64"]
         },
         "cmake-out-of-src": {
             "build": "cmake-out-of-src",
             "environment": {"MAKE": "make"},
-            "tests": ["basic"],
             "platforms": ["ubuntu-16.04-x64"]
         },
         "curves": {
@@ -268,7 +267,7 @@
             "platforms": ["ubuntu-16.04-x64"]
         },
         "check-recursion": {
-            "script": "./tests/scripts/recursion.pl library/*.c",
+            "script": "'./tests/scripts/recursion.pl library/*.c'",
             "platforms": ["ubuntu-16.04-x64"]
         },
         "check-generated-files": {

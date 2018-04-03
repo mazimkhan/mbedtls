@@ -339,7 +339,7 @@ echo "here"
 
         if uname -a | grep -F x86_64 >/dev/null; then
             msg "build: i386, make, gcc" # ~ 30s
-            ${MAKE} CC=${CC} CFLAGS=${CFLAGS}
+            ${MAKE}
         fi # x86_64
 
     else
