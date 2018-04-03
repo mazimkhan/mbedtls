@@ -183,19 +183,21 @@ def get_tests_for_job(job_name):
     for test_name, details in job.items():
         for platform in details["platforms"]:
             ci_test_name = "%s-%s" %(test_name, platform)
-            yield ci_test_name, details.get('build', None),\
+            yield ci_test_name, details.get('config', None),\
+                details.get('build', None),\
                 details.get('script', None),\
                 details.get('environment', {}),\
                 details.get('tests', []), platform
 
 
-def gen_env_file(test_name, build_name, script, environment, tests, set_cmd,
-                 env_file):
+def gen_env_file(test_name, config, build_name, script, environment, tests,
+                 set_cmd, env_file):
     """
     Generates environment script env_file from test details.
 
     :param test_name: A descriptive test name describing test, environment and
                       platform. Example: cmake-asan-debian-x64
+    :param config: Configuration to build. Example: baremetal.
     :param build_name: Build name. Example: make, cmake etc.
     :param script: Script to run. Example: tests/scripts/all.sh
     :param environment: Build & Test environment. Example: {'CC':'gcc'}
@@ -208,6 +210,8 @@ def gen_env_file(test_name, build_name, script, environment, tests, set_cmd,
             f.write("%s %s=%s\n" % (set_cmd, k, v))
         f.write("%s %s=%s\n" % (set_cmd, 'TEST_NAME', test_name))
         assert build_name or script, "Neither BUILD nor SCRIPT specified for test %s" % test_name
+        if config:
+            f.write("%s %s=%s\n" % (set_cmd, 'CONFIG', config))
         if build_name:
             f.write("%s %s=%s\n" % (set_cmd, 'BUILD', build_name))
         if script:
@@ -232,12 +236,12 @@ def list_tests(job, filename):
     """
     if filename:
         with open(filename, 'w') as f:
-            for test_name, build_name, script, environment, tests, platform\
-                    in get_tests_for_job(job):
+            for test_name, config, build_name, script, environment, tests,\
+                    platform in get_tests_for_job(job):
                 f.write("%s|%s\n" %(test_name, platform))
     else:
-        for test_name, build_name, script, environment, tests, platform\
-                in get_tests_for_job(job):
+        for test_name, config, build_name, script, environment, tests,\
+                platform in get_tests_for_job(job):
             print("%s|%s" %(test_name, platform))
 
 
@@ -258,12 +262,12 @@ def gen_environment_for_test(test_to_generate):
     :param test_to_generate: Descriptive test name. Ex: cmake-asan-debian-x64
     """
     for job in get_ci_data().keys():
-        for test_name, build_name, script, environment, tests, platform\
+        for test_name, config, build_name, script, environment, tests, platform\
                 in get_tests_for_job(job):
             if test_name == test_to_generate:
                 set_cmd, env_file = ('set', BATCH_ENV_FILE) if 'windows'\
                     in platform.lower() else ('export', SH_ENV_FILE)
-                gen_env_file(test_name, build_name, script, environment,
+                gen_env_file(test_name, config, build_name, script, environment,
                              tests, set_cmd, env_file)
                 return
     print("Error: job or test not found!")
