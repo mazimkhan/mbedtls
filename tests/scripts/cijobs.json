@@ -60,7 +60,8 @@
         "make-32bit-bignum-limbs": {
             "config": "bignum-limbs",
             "build": "make",
-            "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "\"-Werror -Wall -Wextra -DMBEDTLS_HAVE_INT32\""},
+            "environment": {"MAKE": "make", "CC": "gcc",
+                            "CFLAGS": "\"-Werror -Wall -Wextra -DMBEDTLS_HAVE_INT32\""},
             "tests": ["basic"],
             "platforms": ["ubuntu-16.04-x64"]
         },
@@ -177,7 +178,7 @@
             "config": "no-max-fragment-len",
             "build": "cmake-asan",
             "environment": {"MAKE": "make", "CC": "gcc"},
-            "tests": ["ssl_opt"],
+            "tests": ["ssl_opt_mfl"],
             "platforms": ["ubuntu-16.04-x64"]
         },
         "cmake-asan-gcc-test-null-entropy": {
@@ -204,7 +205,7 @@
         "cmake-release": {
             "build": "cmake-release",
             "environment": {"MAKE": "make", "CC": "clang"},
-            "tests": ["memcheck", "ssl_opt", "compat"],
+            "tests": ["memcheck", "ssl_opt_memcheck", "compat_memcheck"],
             "platforms": ["ubuntu-16.04-x64"]
         },
         "cmake-clang-full-config": {
@@ -277,7 +278,19 @@
                 "cmake-clang", "mingw-make", "msvc12-32", "msvc12-64"],
         "release-tests": ["all.sh"],
         "all-tests": ["print-environment", "source-checks", "cmake-asan-gcc",
-                      "cmake-clang-full-config", "cmake-asan-gcc-sslv3"]
+                      "cmake-clang-full-config", "cmake-asan-gcc-sslv3",
+                      "cmake-asan-gcc-no-renegotiation", "curves",
+                      "keyexchanges", "unix-make", "make-full-config",
+                      "make-no-std-func-nv-seed", "make-no-srv", "make-no-client",
+                      "make-no-net-entropy", "cmake-asan-gcc-no-max-fragment-len",
+                      "cmake-asan-gcc-test-null-entropy", "make-shared",
+                      "make-i386-on-x64", "make-ilp32-on-x64",
+                      "make-32bit-bignum-limbs", "make-gcc-arm",
+                      "make-gcc-arm-no-udbl", "make-arm5",
+                      "make-allow-sha1-certs", "cmake-asan-rsa-no-crt",
+                      "cross-build-windows", "cross-build-tests-windows",
+                      "cross-build-dll", "cross-build-tests-dll",
+                      "cmake-memsan", "cmake-release", "cmake-out-of-src"]
     },
     "jobs": {
         "mbedtls-commit-tests": {
