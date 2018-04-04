@@ -93,10 +93,59 @@
         "make-arm5": {
             "config": "baremetal-for-arm",
             "build": "make-lib",
-            "environment": {"MAKE": "make", "CC": "$ARMC5_CC",
-                            "AR": "$ARMC5_AR",
+            "environment": {"MAKE": "make", "CC": "$ARMC5_BIN_DIR/armcc",
+                            "AR": "$ARMC5_BIN_DIR/armar",
                             "WARNING_CFLAGS": "'--strict --c99'"},
-            "tests": ["armc6_build_tests"],
+            "platforms": ["ubuntu-16.04-x64"]
+        },
+        "make-arm6-v7-a": {
+            "config": "baremetal-for-arm",
+            "build": "make-lib",
+            "environment": {"MAKE": "make", "CC": "$ARMC6_BIN_DIR/armclang",
+                            "ARM_TOOL_VARIANT": "ult",
+                            "AR": "$ARMC6_BIN_DIR/armar",
+                            "WARNING_CFLAGS": "'-xc -std=c99'",
+                            "CFLAGS": "'--target=arm-arm-none-eabi -march=armv7-a'"},
+            "platforms": ["ubuntu-16.04-x64"]
+        },
+        "make-arm6-v7-m": {
+            "config": "baremetal-for-arm",
+            "build": "make-lib",
+            "environment": {"MAKE": "make", "CC": "$ARMC6_BIN_DIR/armclang",
+                            "ARM_TOOL_VARIANT": "ult",
+                            "AR": "$ARMC6_BIN_DIR/armar",
+                            "WARNING_CFLAGS": "'-xc -std=c99'",
+                            "CFLAGS": "'--target=arm-arm-none-eabi -march=armv7-m'"},
+            "platforms": ["ubuntu-16.04-x64"]
+        },
+        "make-arm6-v8.2-a": {
+            "config": "baremetal-for-arm",
+            "build": "make-lib",
+            "environment": {"MAKE": "make", "CC": "$ARMC6_BIN_DIR/armclang",
+                            "ARM_TOOL_VARIANT": "ult",
+                            "AR": "$ARMC6_BIN_DIR/armar",
+                            "WARNING_CFLAGS": "'-xc -std=c99'",
+                            "CFLAGS": "'--target=arm-arm-none-eabi -march=armv8.2-a'"},
+            "platforms": ["ubuntu-16.04-x64"]
+        },
+        "make-arm6-v8.2-a-64bit": {
+            "config": "baremetal-for-arm",
+            "build": "make-lib",
+            "environment": {"MAKE": "make", "CC": "$ARMC6_BIN_DIR/armclang",
+                            "ARM_TOOL_VARIANT": "ult",
+                            "AR": "$ARMC6_BIN_DIR/armar",
+                            "WARNING_CFLAGS": "'-xc -std=c99'",
+                            "CFLAGS": "'--target=aarch64-arm-none-eabi -march=armv8.2-a'"},
+            "platforms": ["ubuntu-16.04-x64"]
+        },
+        "make-arm6-v8.2-m.main": {
+            "config": "baremetal-for-arm",
+            "build": "make-lib",
+            "environment": {"MAKE": "make", "CC": "$ARMC6_BIN_DIR/armclang",
+                            "ARM_TOOL_VARIANT": "ult",
+                            "AR": "$ARMC6_BIN_DIR/armar",
+                            "WARNING_CFLAGS": "'-xc -std=c99'",
+                            "CFLAGS": "'--target=arm-arm-none-eabi -march=armv8.2-m.main'"},
             "platforms": ["ubuntu-16.04-x64"]
         },
         "make-allow-sha1-certs": {
@@ -183,7 +232,7 @@
         },
         "cmake-asan-gcc-test-null-entropy": {
             "config": "test-null-entropy",
-            "build": "cmake-asan",
+            "build": "cmake-unsafe",
             "environment": {"MAKE": "make", "CC": "gcc"},
             "tests": ["basic"],
             "platforms": ["ubuntu-16.04-x64"]
@@ -301,7 +350,9 @@
                       "cmake-asan-gcc-test-null-entropy", "make-shared",
                       "make-i386-on-x64", "make-ilp32-on-x64",
                       "make-32bit-bignum-limbs", "make-gcc-arm",
-                      "make-gcc-arm-no-udbl", "make-arm5",
+                      "make-gcc-arm-no-udbl", "make-arm5", "make-arm6-v7-a",
+                      "make-arm6-v7-m", "make-arm6-v8.2-a",
+                      "make-arm6-v8.2-a-64bit", "make-arm6-v8.2-m.main",
                       "make-allow-sha1-certs", "cmake-asan-rsa-no-crt",
                       "cross-build-windows", "cross-build-tests-windows",
                       "cross-build-dll", "cross-build-tests-dll",
