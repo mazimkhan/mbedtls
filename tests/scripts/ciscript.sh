@@ -102,8 +102,6 @@ msg()
 
 . ./cienv.sh
 check_env TEST_NAME MBEDTLS_ROOT
-CONFIG_H=$MBEDTLS_ROOT/include/mbedtls/config.h
-CONFIG_BAK="$CONFIG_H.bak"
 
 cd ${MBEDTLS_ROOT}
 
@@ -112,39 +110,29 @@ cd ${MBEDTLS_ROOT}
 ################################################################
 if [ "X${CONFIG:-X}" != XX ]; then
     if [ "${CONFIG}" = "sslv3" ]; then
-        cp "$CONFIG_H" "$CONFIG_BAK"
         scripts/config.pl set MBEDTLS_SSL_PROTO_SSL3
     elif [ "${CONFIG}" = "no_ssl_renegotiation" ]; then
-        cp "$CONFIG_H" "$CONFIG_BAK"
         scripts/config.pl unset MBEDTLS_SSL_RENEGOTIATION
     elif [ "${CONFIG}" = "full-config-no-mem-backtrace" ]; then
-        cp "$CONFIG_H" "$CONFIG_BAK"
         scripts/config.pl full
         scripts/config.pl unset MBEDTLS_MEMORY_BACKTRACE
     elif [ "${CONFIG}" = "full-config-no-std-func-nv-seed" ]; then
-        cp "$CONFIG_H" "$CONFIG_BAK"
         scripts/config.pl full
         scripts/config.pl set MBEDTLS_PLATFORM_NO_STD_FUNCTIONS
         scripts/config.pl unset MBEDTLS_ENTROPY_NV_SEED
     elif [ "${CONFIG}" = "full-config-no-srv" ]; then
-        cp "$CONFIG_H" "$CONFIG_BAK"
         scripts/config.pl full
         scripts/config.pl set MBEDTLS_SSL_SRV_C
     elif [ "${CONFIG}" = "full-config-no-cli" ]; then
-        cp "$CONFIG_H" "$CONFIG_BAK"
         scripts/config.pl full
         scripts/config.pl set MBEDTLS_SSL_CLI_C
     elif [ "${CONFIG}" = "full-config-no-net-entropy" ]; then
-        cp "$CONFIG_H" "$CONFIG_BAK"
         scripts/config.pl full
         scripts/config.pl unset MBEDTLS_NET_C # getaddrinfo() undeclared, etc.
         scripts/config.pl set MBEDTLS_NO_PLATFORM_ENTROPY # uses syscall() on GNU/Linux
     elif [ "${CONFIG}" = "no-max-fragment-len" ]; then
-        cp "$CONFIG_H" "$CONFIG_BAK"
-        scripts/config.pl full
         scripts/config.pl unset MBEDTLS_SSL_MAX_FRAGMENT_LENGTH
     elif [ "${CONFIG}" = "test-null-entropy" ]; then
-        cp "$CONFIG_H" "$CONFIG_BAK"
         scripts/config.pl set MBEDTLS_TEST_NULL_ENTROPY
         scripts/config.pl set MBEDTLS_NO_DEFAULT_ENTROPY_SOURCES
         scripts/config.pl set MBEDTLS_ENTROPY_C
@@ -153,13 +141,11 @@ if [ "X${CONFIG:-X}" != XX ]; then
         scripts/config.pl unset MBEDTLS_HAVEGE_C
 
     elif [ "${CONFIG}" = "bignum-limbs" ]; then
-        cp "$CONFIG_H" "$CONFIG_BAK"
         scripts/config.pl unset MBEDTLS_HAVE_ASM
         scripts/config.pl unset MBEDTLS_AESNI_C
         scripts/config.pl unset MBEDTLS_PADLOCK_C
 
     elif [ "${CONFIG}" = "baremetal" ]; then
-        cp "$CONFIG_H" "$CONFIG_BAK"
         scripts/config.pl full
         scripts/config.pl unset MBEDTLS_NET_C
         scripts/config.pl unset MBEDTLS_TIMING_C
@@ -174,7 +160,6 @@ if [ "X${CONFIG:-X}" != XX ]; then
         scripts/config.pl unset MBEDTLS_MEMORY_BUFFER_ALLOC_C # calls exit
 
     elif [ "${CONFIG}" = "baremetal-no-udbl" ]; then
-        cp "$CONFIG_H" "$CONFIG_BAK"
         scripts/config.pl full
         scripts/config.pl unset MBEDTLS_NET_C
         scripts/config.pl unset MBEDTLS_TIMING_C
@@ -190,7 +175,6 @@ if [ "X${CONFIG:-X}" != XX ]; then
         scripts/config.pl set MBEDTLS_NO_UDBL_DIVISION
 
     elif [ "${CONFIG}" = "baremetal-for-arm" ]; then
-        cp "$CONFIG_H" "$CONFIG_BAK"
         scripts/config.pl full
         scripts/config.pl unset MBEDTLS_NET_C
         scripts/config.pl unset MBEDTLS_TIMING_C
@@ -209,7 +193,6 @@ if [ "X${CONFIG:-X}" != XX ]; then
         scripts/config.pl unset MBEDTLS_PLATFORM_TIME_ALT # depends on MBEDTLS_HAVE_TIME
 
     elif [ "${CONFIG}" = "full-config-no-platform" ]; then
-        cp "$CONFIG_H" "$CONFIG_BAK"
         scripts/config.pl full
         scripts/config.pl unset MBEDTLS_PLATFORM_C
         scripts/config.pl unset MBEDTLS_NET_C
@@ -223,13 +206,10 @@ if [ "X${CONFIG:-X}" != XX ]; then
         scripts/config.pl unset MBEDTLS_MEMORY_BUFFER_ALLOC_C
         scripts/config.pl unset MBEDTLS_FS_IO
     elif [ "${CONFIG}" = "allow-sha1-in-certs" ]; then
-        cp "$CONFIG_H" "$CONFIG_BAK"
         scripts/config.pl set MBEDTLS_TLS_DEFAULT_ALLOW_SHA1_IN_CERTIFICATES
     elif [ "${CONFIG}" = "rsa-no-cert" ]; then
-        cp "$CONFIG_H" "$CONFIG_BAK"
         scripts/config.pl set MBEDTLS_RSA_NO_CRT
     elif [ "${CONFIG}" = "memsan" ]; then
-        cp "$CONFIG_H" "$CONFIG_BAK"
         scripts/config.pl unset MBEDTLS_AESNI_C
     else
         scripts/config.pl ${CONFIG}
