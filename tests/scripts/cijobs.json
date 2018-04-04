@@ -138,14 +138,14 @@
                             "CFLAGS": "'--target=aarch64-arm-none-eabi -march=armv8.2-a'"},
             "platforms": ["ubuntu-16.04-x64"]
         },
-        "make-arm6-v8.2-m.main": {
+        "make-arm6-v8-m.main": {
             "config": "baremetal-for-arm",
             "build": "make-lib",
             "environment": {"MAKE": "make", "CC": "$ARMC6_BIN_DIR/armclang",
                             "ARM_TOOL_VARIANT": "ult",
                             "AR": "$ARMC6_BIN_DIR/armar",
                             "WARNING_CFLAGS": "'-xc -std=c99'",
-                            "CFLAGS": "'--target=arm-arm-none-eabi -march=armv8.2-m.main'"},
+                            "CFLAGS": "'--target=arm-arm-none-eabi -march=armv8-m.main'"},
             "platforms": ["ubuntu-16.04-x64"]
         },
         "make-allow-sha1-certs": {
