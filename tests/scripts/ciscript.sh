@@ -260,6 +260,12 @@ echo "here"
         cmake -D CMAKE_BUILD_TYPE:String=Release .
         ${MAKE}
 
+    elif [ "$BUILD" = "cmake-unsafe" ]; then
+        check_env CC MAKE
+
+        cmake  -D UNSAFE_BUILD=ON -D CMAKE_C_FLAGS:String="-fsanitize=address -fno-common -O3" .
+        ${MAKE}
+
     elif [ "$BUILD" = "cmake-out-of-src" ]; then
         MBEDTLS_ROOT_DIR="$PWD"
         mkdir build
