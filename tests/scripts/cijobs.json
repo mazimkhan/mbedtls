@@ -352,7 +352,7 @@
                       "make-32bit-bignum-limbs", "make-gcc-arm",
                       "make-gcc-arm-no-udbl", "make-arm5", "make-arm6-v7-a",
                       "make-arm6-v7-m", "make-arm6-v8.2-a",
-                      "make-arm6-v8.2-a-64bit", "make-arm6-v8.2-m.main",
+                      "make-arm6-v8.2-a-64bit", "make-arm6-v8-m.main",
                       "make-allow-sha1-certs", "cmake-asan-rsa-no-crt",
                       "cross-build-windows", "cross-build-tests-windows",
                       "cross-build-dll", "cross-build-tests-dll",
