@@ -348,6 +348,10 @@ if [ "$RUN_BASIC_TEST" = "1" ]; then
     ./programs/test/selftest
 fi
 
+if [ "$RUN_CTEST_TEST" = "1" ]; then
+    ctest -vv
+fi
+
 if [ "$RUN_FULL_TEST" = "1" ]; then
     ctest -vv
     ./programs/test/selftest
