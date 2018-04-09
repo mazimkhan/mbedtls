@@ -46,7 +46,7 @@ def create_subjob( test_name, platform, docker_lbl, src_stash_name ) {
                     sh """
 ./tests/scripts/cibuilder.py -e ${test_name}
 echo \"MBEDTLS_ROOT=.\" >> cienv.sh
-docker run --rm -u \$(id -u):\$(id -g) --entrypoint /var/lib/build/tests/scripts/ciscript.sh -w /var/lib/build -v `pwd`:/var/lib/build -v /home/ubuntu/.ssh:/home/mbedjenkins/.ssh ${platform}
+docker run --rm -u \$(id -u):\$(id -g) --entrypoint /var/lib/build/tests/scripts/ciscript.sh -w /var/lib/build -v `pwd`:/var/lib/build -v /home/ubuntu/.ssh:/home/mbedjenkins/.ssh --cap-add SYS_PTRACE ${platform}
 """
                 }
             }

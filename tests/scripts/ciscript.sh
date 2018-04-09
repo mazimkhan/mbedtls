@@ -219,10 +219,8 @@ fi
 ################################################################
 #### Perform build step
 ################################################################
-echo "here"
 
 if [ "X${BUILD:-X}" != XX ]; then
-echo "here"
     if [ "$BUILD" = "make" ]; then
         check_env CC MAKE
         ${MAKE} clean
