@@ -224,107 +224,29 @@ if [ "X${BUILD:-X}" != XX ]; then
     if [ "$BUILD" = "make" ]; then
         check_env CC MAKE
         ${MAKE} clean
-        ${MAKE}
+        ${MAKE} ${MAKE_TARGET}
 
     elif [ "$BUILD" = "cmake" ]; then
         check_env CC MAKE
-        cmake -D CMAKE_BUILD_TYPE:String=Check .
-        ${MAKE} clean
-        ${MAKE}
 
-    elif [ "$BUILD" = "cmake-asan" ]; then
-        check_env CC MAKE
-
+        # Workaround for deprecated option fno-sanitize-recover
         set +e
-        grep "fno-sanitize-recover=undefined,integer" CMakeLists.txt
-        if [ $? -ne 0 ]
-        then
-            sed -i s/"fno-sanitize-recover"/"fno-sanitize-recover=undefined,integer"/ CMakeLists.txt
+        if [ "$CMAKE_BUILD_TYPE" = "ASan" ]; then
+            grep "fno-sanitize-recover=undefined,integer" CMakeLists.txt
+            if [ $? -ne 0 ]
+            then
+                sed -i s/"fno-sanitize-recover"/"fno-sanitize-recover=undefined,integer"/ CMakeLists.txt
+            fi
         fi
         set -e
 
-        cmake -D CMAKE_BUILD_TYPE:String=ASan .
+        CMAKE_BUILD_DIR=${CMAKE_BUILD_DIR:-$MBEDTLS_ROOT}
+        mkdir -p $CMAKE_BUILD_DIR
+        cd $CMAKE_BUILD_DIR
+
+        cmake -D UNSAFE_BUILD=${UNSAFE_BUILD:-OFF} -D CMAKE_BUILD_TYPE:String=${CMAKE_BUILD_TYPE} $MBEDTLS_ROOT
+        ${MAKE} clean
         ${MAKE}
-
-    elif [ "$BUILD" = "cmake-memsan" ]; then
-        check_env CC MAKE
-
-        cmake -D CMAKE_BUILD_TYPE:String=MemSan .
-        ${MAKE}
-
-    elif [ "$BUILD" = "cmake-release" ]; then
-        check_env CC MAKE
-
-        cmake -D CMAKE_BUILD_TYPE:String=Release .
-        ${MAKE}
-
-    elif [ "$BUILD" = "cmake-unsafe" ]; then
-        check_env CC MAKE
-
-        cmake  -D UNSAFE_BUILD=ON -D CMAKE_C_FLAGS:String="-fsanitize=address -fno-common -O3" .
-        ${MAKE}
-
-    elif [ "$BUILD" = "cmake-out-of-src" ]; then
-        MBEDTLS_ROOT_DIR="$PWD"
-        mkdir build
-        cd build
-        cmake "$MBEDTLS_ROOT_DIR"
-        make
-        msg "test: cmake 'out-of-source' build"
-        make test
-        cd "$MBEDTLS_ROOT_DIR"
-        rm -rf build
-
-    elif [ "$BUILD" = "all.sh" ]; then
-
-        if [ ! -d .git ]
-        then
-            git config --global user.email "you@example.com"
-            git config --global user.name "Your Name"
-            git init
-            git add .
-            git commit -m "CI code copy"
-        fi
-        ./tests/scripts/all.sh -r -k --no-yotta
-
-    elif [ "$BUILD" = "cmake-debug" ]; then
-        cmake -D CMAKE_BUILD_TYPE:String=Debug .
-
-    elif [ "$BUILD" = "make-full-config" ]; then
-        make CC=gcc CFLAGS='-Werror -Wall -Wextra -std=c99 -pedantic -O0 -D_DEFAULT_SOURCE' lib programs
-        make CC=gcc CFLAGS='-Werror -Wall -Wextra -O0' test
-
-    elif [ "$BUILD" = "make-lib" ]; then
-        ${MAKE} lib
-
-    elif [ "$BUILD" = "make-lib-programs" ]; then
-        ${MAKE} lib programs
-
-    elif [ "$BUILD" = "make-tests" ]; then
-        ${MAKE}
-        ${MAKE} tests
-
-    elif [ "$BUILD" = "make-shared" ]; then
-        check_env CC MAKE
-        if uname -a | grep -F Linux >/dev/null; then
-            msg "build/test: make shared" # ~ 40s
-            ${MAKE} SHARED=1 all check
-        fi
-
-    elif [ "$BUILD" = "make-i386" ]; then
-        check_env CC MAKE
-        if uname -a | grep -F Linux >/dev/null; then
-            msg "build/test: make shared" # ~ 40s
-            ${MAKE} SHARED=1 all check
-        fi
-
-    elif [ "$BUILD" = "make-on-x64" ]; then
-        check_env CC MAKE CFLAGS
-
-        if uname -a | grep -F x86_64 >/dev/null; then
-            msg "build: i386, make, gcc" # ~ 30s
-            ${MAKE}
-        fi # x86_64
 
     else
         echo "Error: Unknown build \"$BUILD\"!"
@@ -342,11 +264,17 @@ fi
 ################################################################
 
 if [ "$RUN_BASIC_TEST" = "1" ]; then
-    ctest -vv
+    if [ "X${CMAKE_BUILD_DIR:-X}" != XX ]; then
+        cd $CMAKE_BUILD_DIR
+    fi
+    make test
     ./programs/test/selftest
 fi
 
 if [ "$RUN_CTEST_TEST" = "1" ]; then
+    if [ "X${CMAKE_BUILD_DIR:-X}" != XX ]; then
+        cd $CMAKE_BUILD_DIR
+    fi
     ctest -vv
 fi
 

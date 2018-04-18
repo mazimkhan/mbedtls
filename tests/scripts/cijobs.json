@@ -31,28 +31,31 @@
         },
         "make-no-net-entropy": {
             "config": "full-config-no-net-entropy",
-            "build": "make-lib",
-            "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "'-Werror -Wall -Wextra -O0 -std=c99 -pedantic'"},
+            "build": "make",
+            "environment": {"MAKE": "make", "CC": "gcc", "MAKE_TARGET": "lib", "CFLAGS": "'-Werror -Wall -Wextra -O0 -std=c99 -pedantic'"},
             "platforms": ["ubuntu-17.10-x64"]
         },
         "make-full-config": {
             "config": "full-config-no-platform",
-            "build": "make-full-config",
+            "build": "make",
+            "environment": {"MAKE": "make", "CC": "gcc",
+                "CFLAGS": "'-Werror -Wall -Wextra -O0 -std=c99 -pedantic -D_DEFAULT_SOURCE'"},
+            "tests": ["basic"],
             "platforms": ["ubuntu-17.10-x64"]
         },
         "make-shared": {
-            "build": "make-shared",
-            "environment": {"MAKE": "make", "CC": "gcc"},
+            "build": "make",
+            "environment": {"MAKE": "make", "CC": "gcc", "SHARED": 1},
             "platforms": ["ubuntu-17.10-x64"]
         },
         "make-i386-on-x64": {
-            "build": "make-on-x64",
+            "build": "make",
             "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "'-Werror -Wall -Wextra -m32'"},
             "tests": ["basic"],
             "platforms": ["ubuntu-17.10-x64"]
         },
         "make-ilp32-on-x64": {
-            "build": "make-on-x64",
+            "build": "make",
             "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "'-Werror -Wall -Wextra -mx32'"},
             "tests": ["basic"],
             "platforms": ["ubuntu-17.10-x64"]
@@ -75,77 +78,85 @@
         },
         "make-gcc-arm": {
             "config": "baremetal",
-            "build": "make-lib",
+            "build": "make",
             "environment": {"MAKE": "make", "CC": "arm-none-eabi-gcc",
                             "AR": "arm-none-eabi-ar", "LD": "arm-none-eabi-ld",
-                            "CFLAGS": "'-Werror -Wall -Wextra'"},
+                            "CFLAGS": "'-Werror -Wall -Wextra'",
+                            "MAKE_TARGET": "lib"},
             "platforms": ["ubuntu-17.10-x64"]
         },
         "make-gcc-arm-no-udbl": {
             "config": "baremetal-no-udbl",
-            "build": "make-lib",
+            "build": "make",
             "environment": {"MAKE": "make", "CC": "arm-none-eabi-gcc",
                             "AR": "arm-none-eabi-ar", "LD": "arm-none-eabi-ld",
-                            "CFLAGS": "'-Werror -Wall -Wextra'"},
+                            "CFLAGS": "'-Werror -Wall -Wextra'",
+                            "MAKE_TARGET": "lib"},
             "tests": ["no_64bit_div"],
             "platforms": ["ubuntu-17.10-x64"]
         },
         "make-arm5": {
             "config": "baremetal-for-arm",
-            "build": "make-lib",
+            "build": "make",
             "environment": {"MAKE": "make", "CC": "$ARMC5_BIN_DIR/armcc",
                             "AR": "$ARMC5_BIN_DIR/armar",
-                            "WARNING_CFLAGS": "'--strict --c99'"},
+                            "WARNING_CFLAGS": "'--strict --c99'",
+                            "MAKE_TARGET": "lib"},
             "platforms": ["ubuntu-17.10-x64"]
         },
         "make-arm6-v7-a": {
             "config": "baremetal-for-arm",
-            "build": "make-lib",
+            "build": "make",
             "environment": {"MAKE": "make", "CC": "$ARMC6_BIN_DIR/armclang",
                             "ARM_TOOL_VARIANT": "ult",
                             "AR": "$ARMC6_BIN_DIR/armar",
                             "WARNING_CFLAGS": "'-xc -std=c99'",
-                            "CFLAGS": "'--target=arm-arm-none-eabi -march=armv7-a'"},
+                            "CFLAGS": "'--target=arm-arm-none-eabi -march=armv7-a'",
+                            "MAKE_TARGET": "lib"},
             "platforms": ["ubuntu-17.10-x64"]
         },
         "make-arm6-v7-m": {
             "config": "baremetal-for-arm",
-            "build": "make-lib",
+            "build": "make",
             "environment": {"MAKE": "make", "CC": "$ARMC6_BIN_DIR/armclang",
                             "ARM_TOOL_VARIANT": "ult",
                             "AR": "$ARMC6_BIN_DIR/armar",
                             "WARNING_CFLAGS": "'-xc -std=c99'",
-                            "CFLAGS": "'--target=arm-arm-none-eabi -march=armv7-m'"},
+                            "CFLAGS": "'--target=arm-arm-none-eabi -march=armv7-m'",
+                            "MAKE_TARGET": "lib"},
             "platforms": ["ubuntu-17.10-x64"]
         },
         "make-arm6-v8.2-a": {
             "config": "baremetal-for-arm",
-            "build": "make-lib",
+            "build": "make",
             "environment": {"MAKE": "make", "CC": "$ARMC6_BIN_DIR/armclang",
                             "ARM_TOOL_VARIANT": "ult",
                             "AR": "$ARMC6_BIN_DIR/armar",
                             "WARNING_CFLAGS": "'-xc -std=c99'",
-                            "CFLAGS": "'--target=arm-arm-none-eabi -march=armv8.2-a'"},
+                            "CFLAGS": "'--target=arm-arm-none-eabi -march=armv8.2-a'",
+                            "MAKE_TARGET": "lib"},
             "platforms": ["ubuntu-17.10-x64"]
         },
         "make-arm6-v8.2-a-64bit": {
             "config": "baremetal-for-arm",
-            "build": "make-lib",
+            "build": "make",
             "environment": {"MAKE": "make", "CC": "$ARMC6_BIN_DIR/armclang",
                             "ARM_TOOL_VARIANT": "ult",
                             "AR": "$ARMC6_BIN_DIR/armar",
                             "WARNING_CFLAGS": "'-xc -std=c99'",
-                            "CFLAGS": "'--target=aarch64-arm-none-eabi -march=armv8.2-a'"},
+                            "CFLAGS": "'--target=aarch64-arm-none-eabi -march=armv8.2-a'",
+                            "MAKE_TARGET": "lib"},
             "platforms": ["ubuntu-17.10-x64"]
         },
         "make-arm6-v8-m.main": {
             "config": "baremetal-for-arm",
-            "build": "make-lib",
+            "build": "make",
             "environment": {"MAKE": "make", "CC": "$ARMC6_BIN_DIR/armclang",
                             "ARM_TOOL_VARIANT": "ult",
                             "AR": "$ARMC6_BIN_DIR/armar",
                             "WARNING_CFLAGS": "'-xc -std=c99'",
-                            "CFLAGS": "'--target=arm-arm-none-eabi -march=armv8-m.main'"},
+                            "CFLAGS": "'--target=arm-arm-none-eabi -march=armv8-m.main'",
+                            "MAKE_TARGET": "lib"},
             "platforms": ["ubuntu-17.10-x64"]
         },
         "make-allow-sha1-certs": {
@@ -156,29 +167,30 @@
             "platforms": ["ubuntu-17.10-x64"]
         },
         "cross-build-windows": {
-            "build": "make-lib-programs",
+            "build": "make",
             "environment": {"MAKE": "make", "CC": "i686-w64-mingw32-gcc",
                             "AR": "i686-w64-mingw32-ar", "LD": "i686-w64-minggw32-ld",
-                            "CFLAGS": "'-Werror -Wall -Wextra'", "WINDOWS_BUILD": "1"},
+                            "CFLAGS": "'-Werror -Wall -Wextra'", "WINDOWS_BUILD": "1",
+                            "MAKE_TARGET": "'lib programs'"},
             "platforms": ["ubuntu-17.10-x64"]
         },
         "cross-build-tests-windows": {
-            "build": "make-tests",
+            "build": "make",
             "environment": {"MAKE": "make", "CC": "i686-w64-mingw32-gcc",
                             "AR": "i686-w64-mingw32-ar", "LD": "i686-w64-minggw32-ld",
                             "CFLAGS": "'-Werror'", "WINDOWS_BUILD": "1"},
             "platforms": ["ubuntu-17.10-x64"]
         },
         "cross-build-dll": {
-            "build": "make-lib-programs",
+            "build": "make",
             "environment": {"MAKE": "make", "CC": "i686-w64-mingw32-gcc",
                             "AR": "i686-w64-mingw32-ar", "LD": "i686-w64-minggw32-ld",
                             "CFLAGS": "'-Werror -Wall -Wextra'", "WINDOWS_BUILD": "1",
-                            "SHARED": "1"},
+                            "SHARED": "1", "MAKE_TARGET": "'lib programs'"},
             "platforms": ["ubuntu-17.10-x64"]
         },
         "cross-build-tests-dll": {
-            "build": "make-tests",
+            "build": "make",
             "environment": {"MAKE": "make", "CC": "i686-w64-mingw32-gcc",
                             "AR": "i686-w64-mingw32-ar", "LD": "i686-w64-minggw32-ld",
                             "CFLAGS": "'-Werror'", "WINDOWS_BUILD": "1",
@@ -187,97 +199,98 @@
         },
         "cmake": {
             "build": "cmake",
-            "environment": {"MAKE": "make", "CC": "gcc"},
+            "environment": {"MAKE": "make", "CC": "gcc", "CMAKE_BUILD_TYPE": "Check"},
             "tests": ["basic"],
             "platforms": ["debian-i386", "debian-x64"]
         },
         "cmake-full":  {
             "build": "cmake",
-            "environment": {"MAKE": "make", "CC": "gcc"},
+            "environment": {"MAKE": "make", "CC": "gcc", "CMAKE_BUILD_TYPE": "Check"},
             "tests": ["full"],
             "platforms": ["debian-i386", "debian-x64"]
         },
         "cmake-asan": {
-            "build": "cmake-asan",
-            "environment": {"MAKE": "make", "CC": "clang"},
+            "build": "cmake",
+            "environment": {"MAKE": "make", "CC": "clang", "CMAKE_BUILD_TYPE": "ASan"},
             "tests": ["full"],
             "platforms": ["debian-i386", "debian-x64"]
         },
         "cmake-asan-gcc": {
-            "build": "cmake-asan",
-            "environment": {"MAKE": "make", "CC": "gcc"},
+            "build": "cmake",
+            "environment": {"MAKE": "make", "CC": "gcc", "CMAKE_BUILD_TYPE": "ASan"},
             "tests": ["full"],
             "platforms": ["ubuntu-17.10-x64"]
         },
         "cmake-asan-gcc-sslv3": {
             "config": "sslv3",
-            "build": "cmake-asan",
-            "environment": {"MAKE": "make", "CC": "gcc"},
+            "build": "cmake",
+            "environment": {"MAKE": "make", "CC": "gcc", "CMAKE_BUILD_TYPE": "ASan"},
             "tests": ["sslv3"],
             "platforms": ["ubuntu-17.10-x64"]
         },
         "cmake-asan-gcc-no-renegotiation": {
             "config": "no_ssl_renegotiation",
-            "build": "cmake-asan",
-            "environment": {"MAKE": "make", "CC": "gcc"},
+            "build": "cmake",
+            "environment": {"MAKE": "make", "CC": "gcc", "CMAKE_BUILD_TYPE": "ASan"},
             "tests": ["basic", "ssl_opt"],
             "platforms": ["ubuntu-17.10-x64"]
         },
         "cmake-asan-gcc-no-max-fragment-len": {
             "config": "no-max-fragment-len",
-            "build": "cmake-asan",
-            "environment": {"MAKE": "make", "CC": "gcc"},
+            "build": "cmake",
+            "environment": {"MAKE": "make", "CC": "gcc", "CMAKE_BUILD_TYPE": "ASan"},
             "tests": ["ssl_opt_mfl"],
             "platforms": ["ubuntu-17.10-x64"]
         },
         "cmake-asan-gcc-test-null-entropy": {
             "config": "test-null-entropy",
-            "build": "cmake-unsafe",
-            "environment": {"MAKE": "make", "CC": "gcc"},
+            "build": "cmake",
+            "environment": {"MAKE": "make", "CC": "gcc", "UNSAFE_BUILD": "ON",
+                "CFLAGS": "'-fsanitize=address -fno-common -O3'"},
             "tests": ["ctest"],
             "platforms": ["ubuntu-17.10-x64"]
         },
         "cmake-asan-rsa-no-crt": {
             "config": "rsa-no-cert",
-            "build": "cmake-asan",
-            "environment": {"MAKE": "make", "CC": "gcc"},
+            "build": "cmake",
+            "environment": {"MAKE": "make", "CC": "gcc", "CMAKE_BUILD_TYPE": "ASan"},
             "tests": ["basic"],
             "platforms": ["ubuntu-17.10-x64"]
         },
         "cmake-memsan": {
             "config": "memsan",
-            "build": "cmake-memsan",
-            "environment": {"MAKE": "make", "CC": "clang"},
+            "build": "cmake",
+            "environment": {"MAKE": "make", "CC": "clang", "CMAKE_BUILD_TYPE": "MemSan"},
             "tests": ["basic", "ssl_opt", "compat"],
             "platforms": ["ubuntu-17.10-x64"]
         },
         "cmake-release": {
-            "build": "cmake-release",
-            "environment": {"MAKE": "make", "CC": "clang"},
+            "build": "cmake",
+            "environment": {"MAKE": "make", "CC": "clang", "CMAKE_BUILD_TYPE": "Release"},
             "tests": ["memcheck", "ssl_opt_memcheck", "compat_memcheck"],
             "platforms": ["ubuntu-17.10-x64"]
         },
         "cmake-clang-full-config": {
             "config": "full-config-no-mem-backtrace",
             "build": "cmake",
-            "environment": {"MAKE": "make", "CC": "clang"},
+            "environment": {"MAKE": "make", "CC": "clang", "CMAKE_BUILD_TYPE": "Check"},
             "tests": ["basic", "ssl_opt", "compat_rc4_des_null"],
             "platforms": ["ubuntu-17.10-x64"]
         },
         "cmake-out-of-src": {
-            "build": "cmake-out-of-src",
-            "environment": {"MAKE": "make"},
+            "build": "cmake",
+            "environment": {"MAKE": "make", "CC": "gcc", "CMAKE_BUILD_DIR": "build"},
             "platforms": ["ubuntu-17.10-x64"]
         },
         "curves": {
-            "build": "cmake-debug",
-            "environment": {"MAKE": "make", "CC": "gcc"},
+            "build": "cmake",
+            "environment": {"MAKE": "make", "CC": "gcc", "CMAKE_BUILD_TYPE": "Debug"},
             "tests": ["curves"],
             "platforms": ["ubuntu-17.10-x64"]
         },
         "keyexchanges": {
             "build": "cmake",
-            "environment": {"MAKE": "make", "CC": "gcc"},
+            "environment": {"MAKE": "make", "CC": "gcc", "CMAKE_BUILD_TYPE": "Check"},
             "tests": ["keyexchanges"],
             "platforms": ["ubuntu-17.10-x64"]
         },
@@ -289,7 +302,7 @@
         },
         "cmake-clang": {
             "build": "cmake",
-            "environment": {"MAKE": "make", "CC": "clang"},
+            "environment": {"MAKE": "make", "CC": "clang", "CMAKE_BUILD_TYPE": "Check"},
             "tests": ["basic"],
             "platforms": ["freebsd"]
         },
