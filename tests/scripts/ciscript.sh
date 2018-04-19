@@ -240,11 +240,12 @@ if [ "X${BUILD:-X}" != XX ]; then
         fi
         set -e
 
+        SRC_DIR="$PWD" # $MBEDTLS_ROOT can be relative. Hence, get full path.
         CMAKE_BUILD_DIR=${CMAKE_BUILD_DIR:-$MBEDTLS_ROOT}
         mkdir -p $CMAKE_BUILD_DIR
         cd $CMAKE_BUILD_DIR
 
-        cmake -D UNSAFE_BUILD=${UNSAFE_BUILD:-OFF} -D CMAKE_BUILD_TYPE:String=${CMAKE_BUILD_TYPE} $MBEDTLS_ROOT
+        cmake -D UNSAFE_BUILD=${UNSAFE_BUILD:-OFF} -D CMAKE_BUILD_TYPE:String=${CMAKE_BUILD_TYPE} $SRC_DIR
         ${MAKE} clean
         ${MAKE}
 
