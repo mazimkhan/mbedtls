@@ -353,7 +353,9 @@
                 "make-gcc", "cmake", "cmake-full", "cmake-asan", "gmake-clang",
                 "cmake-clang", "mingw-make", "msvc12-32", "msvc12-64"],
         "release-tests": ["all.sh"],
-        "all-tests": ["print-environment", "cmake-asan-gcc",
+        "all-tests": [{
+            "platform": "ubuntu-17.10-x64",
+            "tests": ["print-environment", "cmake-asan-gcc",
                       "cmake-clang-full-config", "cmake-asan-gcc-sslv3",
                       "cmake-asan-gcc-no-renegotiation", "curves",
                       "keyexchanges", "unix-make", "make-full-config",
@@ -371,6 +373,8 @@
                       "cmake-memsan", "cmake-release", "cmake-out-of-src",
                       "check-recursion", "check-generated-files",
                       "check-doxy-blocks", "check-names", "check-doxygen"]
+            }
+        ]
     },
     "jobs": {
         "mbedtls-commit-tests": {
