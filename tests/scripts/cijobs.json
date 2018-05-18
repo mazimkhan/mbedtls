@@ -3,7 +3,7 @@
         "make-gcc": {
             "build": "make",
             "environment": {"MAKE": "make", "CC": "gcc"},
-            "tests": ["basic"]
+            "tests": ["make test", "./programs/test/selftest"]
         },
         "unix-make": {
             "build": "make",
@@ -57,7 +57,7 @@
             "build": "make",
             "environment": {"MAKE": "make", "CC": "gcc",
                 "CFLAGS": "'-Werror -Wall -Wextra -O0 -std=c99 -pedantic -D_DEFAULT_SOURCE'"},
-            "tests": ["basic"]
+            "tests": ["make test", "./programs/test/selftest"]
         },
         "make-shared": {
             "build": "make",
@@ -66,26 +66,26 @@
         "make-i386-on-x64": {
             "build": "make",
             "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "'-Werror -Wall -Wextra -m32'"},
-            "tests": ["basic"]
+            "tests": ["make test", "./programs/test/selftest"]
         },
         "make-ilp32-on-x64": {
             "build": "make",
             "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "'-Werror -Wall -Wextra -mx32'"},
-            "tests": ["basic"]
+            "tests": ["make test", "./programs/test/selftest"]
         },
         "make-32bit-bignum-limbs": {
             "config": {"unset": ["MBEDTLS_HAVE_ASM", "MBEDTLS_AESNI_C", "MBEDTLS_PADLOCK_C"]},
             "build": "make",
             "environment": {"MAKE": "make", "CC": "gcc",
                             "CFLAGS": "'-Werror -Wall -Wextra -DMBEDTLS_HAVE_INT32'"},
-            "tests": ["basic"]
+            "tests": ["make test", "./programs/test/selftest"]
         },
         "make-64bit-bignum-limbs": {
             "config": {"unset": ["MBEDTLS_HAVE_ASM", "MBEDTLS_AESNI_C", "MBEDTLS_PADLOCK_C"]},
             "build": "make",
             "environment": {"MAKE": "make", "CC": "gcc",
                             "CFLAGS": "'-Werror -Wall -Wextra -DMBEDTLS_HAVE_INT64'"},
-            "tests": ["basic"]
+            "tests": ["make test", "./programs/test/selftest"]
         },
         "make-gcc-arm": {
             "config": {"config": "baremetal"},
@@ -102,7 +102,7 @@
                             "AR": "arm-none-eabi-ar", "LD": "arm-none-eabi-ld",
                             "CFLAGS": "'-Werror -Wall -Wextra'",
                             "MAKE_TARGET": "lib"},
-            "tests": ["no_64bit_div"]
+            "tests": ["! grep __aeabi_uldiv library/*.o"]
         },
         "make-arm5": {
             "config": {"config": "baremetal"},
@@ -166,7 +166,7 @@
             "config": {"set": ["MBEDTLS_TLS_DEFAULT_ALLOW_SHA1_IN_CERTIFICATES"]},
             "build": "make",
             "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "'-Werror -Wall -Wextra'"},
-            "tests": ["basic", "ssl_opt_sha1"]
+            "tests": ["make test", "./programs/test/selftest", "./tests/ssl-opt.sh -f \"SHA-1\""]
         },
         "cross-build-windows": {
             "build": "make",
@@ -198,7 +198,7 @@
         "cmake": {
             "build": "cmake",
             "environment": {"MAKE": "make", "CC": "gcc", "CMAKE_BUILD_TYPE": "Check"},
-            "tests": ["basic"]
+            "tests": ["make test", "./programs/test/selftest"]
         },
         "cmake-full":  {
             "build": "cmake",
@@ -225,13 +225,13 @@
             "config": {"unset": ["MBEDTLS_SSL_RENEGOTIATION"]},
             "build": "cmake",
             "environment": {"MAKE": "make", "CC": "gcc", "CMAKE_BUILD_TYPE": "ASan"},
-            "tests": ["basic", "ssl_opt"]
+            "tests": ["make test", "./programs/test/selftest", "SEED=1 ./tests/ssl-opt.sh"]
         },
         "cmake-asan-gcc-no-max-fragment-len": {
             "config": {"unset": ["MBEDTLS_SSL_MAX_FRAGMENT_LENGTH"]},
             "build": "cmake",
             "environment": {"MAKE": "make", "CC": "gcc", "CMAKE_BUILD_TYPE": "ASan"},
-            "tests": ["ssl_opt_mfl"]
+            "tests": ["./tests/ssl-opt.sh -f \"Max fragment length\""]
         },
         "cmake-asan-gcc-test-null-entropy": {
             "config": {
@@ -241,58 +241,59 @@
             "build": "cmake",
             "environment": {"MAKE": "make", "CC": "gcc", "UNSAFE_BUILD": "ON",
                 "CFLAGS": "'-fsanitize=address -fno-common -O3'"},
-            "tests": ["ctest"]
+            "tests": ["ctest -vv"]
         },
         "cmake-asan-rsa-no-crt": {
             "config": {"set": ["MBEDTLS_RSA_NO_CRT"]},
             "build": "cmake",
             "environment": {"MAKE": "make", "CC": "gcc", "CMAKE_BUILD_TYPE": "ASan"},
-            "tests": ["basic"]
+            "tests": ["make test", "./programs/test/selftest"]
         },
         "cmake-memsan": {
             "config": {"unset": ["MBEDTLS_AESNI_C"]},
             "build": "cmake",
             "environment": {"MAKE": "make", "CC": "clang", "CMAKE_BUILD_TYPE": "MemSan"},
-            "tests": ["basic", "ssl_opt", "compat"]
+            "tests": ["make test", "./programs/test/selftest", "SEED=1 ./tests/ssl-opt.sh", "SEED=1 tests/compat.sh"]
         },
         "cmake-release": {
             "build": "cmake",
             "environment": {"MAKE": "make", "CC": "clang", "CMAKE_BUILD_TYPE": "Release"},
-            "tests": ["memcheck", "ssl_opt_memcheck", "compat_memcheck"]
+            "tests": ["make memcheck", "./tests/ssl-opt.sh --memcheck", "SEED=1 tests/compat.sh --memcheck"]
         },
         "cmake-clang-full-config": {
             "config": {"config": "full", "unset": ["MBEDTLS_MEMORY_BACKTRACE"]},
             "build": "cmake",
             "environment": {"MAKE": "make", "CC": "clang", "CMAKE_BUILD_TYPE": "Check"},
-            "tests": ["basic", "ssl_opt", "compat_rc4_des_null"]
+            "tests": [
+                "make test",
+                "./programs/test/selftest",
+                "SEED=1 ./tests/ssl-opt.sh",
+                "SEED=1 OPENSSL_CMD='$OPENSSL_LEGACY' GNUTLS_CLI='$GNUTLS_LEGACY_CLI' GNUTLS_SERV='$GNUTLS_LEGACY_SERV' tests/compat.sh -e '3DES|DES-CBC3' -f 'NULL|DES|RC4|ARCFOUR'"
+            ]
         },
         "cmake-out-of-src": {
             "build": "cmake",
             "environment": {"MAKE": "make", "CC": "gcc", "CMAKE_BUILD_DIR": "build"}
         },
         "curves": {
-            "build": "cmake",
-            "environment": {"MAKE": "make", "CC": "gcc", "CMAKE_BUILD_TYPE": "Debug"},
-            "tests": ["curves"]
+            "script": "./tests/scripts/curves.pl"
         },
         "keyexchanges": {
-            "build": "cmake",
-            "environment": {"MAKE": "make", "CC": "gcc", "CMAKE_BUILD_TYPE": "Check"},
-            "tests": ["keyexchanges"]
+            "script": "./tests/scripts/key-exchanges.pl"
         },
         "gmake-clang": {
             "build": "make",
             "environment": {"MAKE": "gmake", "CC": "clang"},
-            "tests": ["basic"]
+            "tests": ["make test", "./programs/test/selftest"]
         },
         "cmake-clang": {
             "build": "cmake",
             "environment": {"MAKE": "make", "CC": "clang", "CMAKE_BUILD_TYPE": "Check"},
-            "tests": ["basic"]
+            "tests": ["make test", "./programs/test/selftest"]
         },
         "mingw-make": {
             "build": "mingw-make",
-            "tests": ["basic"]
+            "tests": ["make test", "./programs/test/selftest"]
         },
         "msvc12-32": {
             "build": "msvc12-32"
@@ -307,7 +308,7 @@
             "script": "./scripts/output_env.sh"
         },
         "check-recursion": {
-            "script": "'./tests/scripts/recursion.pl library/*.c'"
+            "script": "./tests/scripts/recursion.pl library/*.c"
         },
         "check-generated-files": {
             "script": "./tests/scripts/check-generated-files.sh"
@@ -321,6 +322,22 @@
         "check-doxygen": {
             "script": "./tests/scripts/doxygen.sh"
         }
+    },
+    "test-scripts": {
+        "full": [
+            "ctest -vv",
+            "./programs/test/selftest",
+            "openssl version",
+            "gnutls-serv -v ",
+            "SEED=1 ./tests/compat.sh",
+            "SEED=1 ./tests/ssl-opt.sh",
+            "SEED=1 ./tests/scripts/test-ref-configs.pl"],
+        "sslv3": [
+            "make test",
+            "SEED=1 ./tests/compat.sh -m 'tls1 tls1_1 tls1_2 dtls1 dtls1_2'",
+            "SEED=1 OPENSSL_CMD=\"$OPENSSL_LEGACY\" tests/compat.sh -m 'ssl3'",
+            "SEED=1 ./tests/ssl-opt.sh"
+        ]
     },
     "campaigns": {
         "linux-tests1": ["make-gcc", "cmake", "cmake-full", "cmake-asan"],
