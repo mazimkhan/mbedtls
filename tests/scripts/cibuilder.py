@@ -13,12 +13,18 @@ class Test(object):
     """
     """
 
-    def __init__(self, test_data, test_scripts):
+    def __init__(self, config=None, set_config=[], unset_config=[],
+                 build=None, script=None, environment={}, tests=[], test_scripts={}):
         """
         """
-        self.test_data = test_data
+        self.config = config
+        self.set_config = set_config
+        self.unset_config = unset_config
+        self.build = build
+        self.script = script
+        self.environment = environment
+        self.tests = tests
         self.test_scripts = test_scripts
-        self.environment = test_data.get('environment', {})
 
     def run_command(self, cmd):
         """
@@ -33,14 +39,17 @@ class Test(object):
         cmd = " ".join((env_str, cmd))
         self.run_command(cmd)
 
-    def do_mbedtls_config(self, config):
+    def do_mbedtls_config(self):
         """
         """
-        if "config" in config:
-            self.run_command("./scripts/config.pl %s" % config["config"])
-        for flag in config.get('set', []):
+        if self.config or self.set_config or self.unset_config:
+            pass # backup original config
+
+        if self.config:
+            self.run_command("./scripts/config.pl %s" % self.config)
+        for flag in self.set_config:
             self.run_command("./scripts/config.pl set %s" % flag)
-        for flag in config.get('unset', []):
+        for flag in self.unset_config:
             self.run_command("./scripts/config.pl unset %s" % flag)
 
     def check_environment(self, vars):
@@ -74,29 +83,25 @@ class Test(object):
     def run(self):
         """
         """
-        test_data = self.test_data
-
         # config
-        if "config" in test_data:
-            self.do_mbedtls_config(test_data["config"])
+        self.do_mbedtls_config()
 
         # build
-        if "build" in test_data:
-            if test_data["build"] == "make":
+        if self.build:
+            if self.build == "make":
                 self.do_make()
-            elif test_data["build"] == "cmake":
+            elif self.build == "cmake":
                 self.do_cmake()
-        elif "script" in test_data:
-            self.run_with_env(test_data["script"])
+        elif self.script:
+            self.run_with_env(self.script)
 
         # test
-        if "tests" in test_data:
-            for test in test_data["tests"]:
-                if test in self.test_scripts:
-                    for cmd in self.test_scripts[test]:
-                        self.run_with_env(cmd)
-                else:
-                    self.run_with_env(test)
+        for test in self.tests:
+            if test in self.test_scripts:
+                for cmd in self.test_scripts[test]:
+                    self.run_with_env(cmd)
+            else:
+                self.run_with_env(test)
 
 
 class CIDataParser(object):
@@ -120,8 +125,43 @@ class CIDataParser(object):
             assert root_key in self.ci_data, \
                 "Mandatory root key '%s' not present!" % root_key
 
+        # Validate tests
+        assert type(self.ci_data["tests"]) == dict, "'tests' data is not a map!"
+        for test_name, test_data in self.ci_data["tests"].items():
+            assert type(test_data) == dict, "Test '%s' data is not a map!" % test_name
+            assert "build" in test_data or "script" in test_data, \
+                "Test '%s' should specify either 'build' or 'script'" % test_name
+            if "config" in test_data:
+                assert type(test_data["config"]) == dict, \
+                    "Test '%s' config data shoud be a map!" % test_data
+                for key in test_data["config"].keys():
+                    assert key in ("config", "set", "unset"), \
+                        "Test '%s' 'config' element '%s' is unknown" % (test_name, key)
+                if "set" in test_data["config"]:
+                    assert type(test_data["config"]["set"]) == list, \
+                        "Test '%s' 'config' element 'set' is not a list" % test_name
+                if "unset" in test_data["config"]:
+                    assert type(test_data["config"]["unset"]) == list, \
+                        "Test '%s' 'config' element 'unset' is not a list" % test_name
+            if "environment" in test_data:
+                assert type(test_data["environment"]) == dict, \
+                    "Test '%s' 'environment' is not a map" % test_name
+            if "tests" in test_data:
+                assert type(test_data["tests"]) == list, \
+                    "Test '%s' 'tests' is not a list" % test_name
+
+        # Validate Campaigns
+        assert type(self.ci_data["campaigns"]) == dict, "'campaigns' data is not a map!"
+        for campaign_name, campaign in self.ci_data["campaigns"].items():
+            assert type(campaign) == list, \
+                "Campaign '%s' type is not a list!" % campaign_name
+            for test_name in campaign:
+                assert test_name in self.ci_data["tests"], \
+                    "Test '%s' reference in campaign '%s' not found in \"tests\"" % \
+                    (test_name, campaign_name)
+
         # Validate Jobs
-        assert type(self.ci_data["jobs"]) == dict, "Jobs data is not a map!"
+        assert type(self.ci_data["jobs"]) == dict, "'jobs' data is not a map!"
         for job_name, job in self.ci_data["jobs"].items():
             assert type(job) == list, "Job '%s' type is not a list!" % job_name
             for combo in job:
@@ -141,16 +181,6 @@ class CIDataParser(object):
                 # Check platforms
                 assert type(combo["platforms"]) == list, \
                     "Element \"platforms\" in job '%s' is not a list!" % job_name
-
-        # Validate Campaigns
-        assert type(self.ci_data["campaigns"]) == dict, "Campaigns data is not a map!"
-        for campaign_name, campaign in self.ci_data["campaigns"].items():
-            assert type(campaign) == list, \
-                "Campaign '%s' type is not a list!" % campaign_name
-            for test_name in campaign:
-                assert test_name in self.ci_data["tests"], \
-                    "Test '%s' reference in campaign '%s' not found in \"tests\"" % \
-                    (test_name, campaign_name)
 
     def get_campaigns(self):
         return sorted(self.ci_data[JSON_ROOT_KEY_CAMPAIGNS].keys())
@@ -184,9 +214,17 @@ class CIDataParser(object):
         return sorted(self.ci_data["tests"].keys())
 
     def get_test(self, test_name):
-        assert test_name in self.ci_data["tests"], "Test '%s' no found!" % test_name
+        assert test_name in self.ci_data["tests"], \
+            "Test '%s' no found!" % test_name
         test_data = self.ci_data["tests"][test_name]
-        return Test(test_data, self.ci_data["test-scripts"])
+        return Test(config = test_data.get("config", {}).get("config", None),
+                    set_config = test_data.get("config", {}).get("set", []),
+                    unset_config = test_data.get("config", {}).get("unset", []),
+                    build = test_data.get("build", None),
+                    script = test_data.get("script", None),
+                    environment = test_data.get("environment", {}),
+                    tests = test_data.get('tests', []),
+                    test_scripts=self.ci_data.get("test-scripts", {}))
 
 
 def test_opt_handler(args):
