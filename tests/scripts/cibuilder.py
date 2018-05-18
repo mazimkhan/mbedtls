@@ -13,33 +13,35 @@ class Test(object):
     """
     """
 
-    def __init__(self, test_data):
+    def __init__(self, test_data, test_scripts):
         """
         """
         self.test_data = test_data
+        self.test_scripts = test_scripts
         self.environment = test_data.get('environment', {})
 
     def run_command(self, cmd):
         """
         """
-        env_str = " ".join(["%s=%s" % (k,v) for k,v in self.environment.items()])
-        cmd = " ".join((env_str, cmd))
         print("Running: %s" % cmd)
         os.system(cmd)
 
-    def execute_tests(test):
+    def run_with_env(self, cmd):
+        """
+        """
         env_str = " ".join(["%s=%s" % (k,v) for k,v in self.environment.items()])
-        print(" ".join((env_str, test)))
+        cmd = " ".join((env_str, cmd))
+        self.run_command(cmd)
 
-    def do_mbedtls_config(config):
+    def do_mbedtls_config(self, config):
         """
         """
         if "config" in config:
-            self.run_command("./test/config.pl %s" % config["config"])
+            self.run_command("./scripts/config.pl %s" % config["config"])
         for flag in config.get('set', []):
-            self.run_command("./test/config.pl set %s" % flag)
+            self.run_command("./scripts/config.pl set %s" % flag)
         for flag in config.get('unset', []):
-            self.run_command("./test/config.pl unset %s" % flag)
+            self.run_command("./scripts/config.pl unset %s" % flag)
 
     def check_environment(self, vars):
         """
@@ -56,8 +58,8 @@ class Test(object):
         self.check_environment(['MAKE', 'CC'])
         make_cmd = "{MAKE}".format(**self.environment)
         make_target = self.environment.get("MAKE_TARGET", "")
-        self.run_command("%s clean" % make_cmd)
-        self.run_command("%s %s" % (make_cmd, make_target))
+        self.run_with_env("%s clean" % make_cmd)
+        self.run_with_env("%s %s" % (make_cmd, make_target))
 
     def do_cmake(self):
         """
@@ -66,7 +68,7 @@ class Test(object):
         unsafe_build = self.environment.get("UNSAFE_BUILD", "OFF")
         cmake_build_type = self.environment.get("CMAKE_BUILD_TYPE", "Check")
         pwd = os.path.abspath(os.path.curdir)
-        self.run_command("cmake -D UNSAFE_BUILD=%s -D CMAKE_BUILD_TYPE:String=%s %s" % (unsafe_build, cmake_build_type, pwd))
+        self.run_with_env("cmake -D UNSAFE_BUILD=%s -D CMAKE_BUILD_TYPE:String=%s %s" % (unsafe_build, cmake_build_type, pwd))
         self.do_make()
 
     def run(self):
@@ -76,7 +78,7 @@ class Test(object):
 
         # config
         if "config" in test_data:
-            do_mbedtls_config(test_data["config"])
+            self.do_mbedtls_config(test_data["config"])
 
         # build
         if "build" in test_data:
@@ -85,12 +87,16 @@ class Test(object):
             elif test_data["build"] == "cmake":
                 self.do_cmake()
         elif "script" in test_data:
-            self.run_command(test_data["script"])
+            self.run_with_env(test_data["script"])
 
         # test
         if "tests" in test_data:
             for test in test_data["tests"]:
-                self.execute_tests(test)
+                if test in self.test_scripts:
+                    for cmd in self.test_scripts[test]:
+                        self.run_with_env(cmd)
+                else:
+                    self.run_with_env(test)
 
 
 class CIDataParser(object):
@@ -180,7 +186,7 @@ class CIDataParser(object):
     def get_test(self, test_name):
         assert test_name in self.ci_data["tests"], "Test '%s' no found!" % test_name
         test_data = self.ci_data["tests"][test_name]
-        return Test(test_data)
+        return Test(test_data, self.ci_data["test-scripts"])
 
 
 def test_opt_handler(args):
