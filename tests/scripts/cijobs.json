@@ -61,7 +61,7 @@
         },
         "make-shared": {
             "build": "make",
-            "environment": {"MAKE": "make", "CC": "gcc", "SHARED": 1}
+            "environment": {"MAKE": "make", "CC": "gcc", "SHARED": "1"}
         },
         "make-i386-on-x64": {
             "build": "make",
