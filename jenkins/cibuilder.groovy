@@ -44,7 +44,8 @@ def create_subjob( test_name, platform, docker_lbl, src_stash_name ) {
                     deleteDir()
                     unstash src_stash_name
                     sh """
-echo \"./tests/scripts/cibuilder.py test -r ${test_name}\" > tests/scripts/ciscript.sh
+echo \"#!/bin/sh\" > tests/scripts/ciscript.sh
+echo \"./tests/scripts/cibuilder.py test -r ${test_name}\" >> tests/scripts/ciscript.sh
 chmod +x tests/scripts/ciscript.sh
 docker run --rm -u \$(id -u):\$(id -g) --entrypoint /var/lib/build/tests/scripts/ciscript.sh -w /var/lib/build -v `pwd`:/var/lib/build -v /home/ubuntu/.ssh:/home/mbedjenkins/.ssh --cap-add SYS_PTRACE ${platform}
 """
