@@ -104,7 +104,7 @@ def create_parallel_jobs( job_name, platform_to_docker_label_map, src_stash_name
         def platform = test_details[0]
         def test_name = test_details[1]
         def docker_lbl = platform_to_docker_label_map[platform]
-        def job = create_subjob( label, test_name, platform, docker_lbl, src_stash_name )
+        def job = create_subjob( test_name, platform, docker_lbl, src_stash_name )
         if( job ){
             test_jobs["$test_name-$platform"] = job
         } else {
