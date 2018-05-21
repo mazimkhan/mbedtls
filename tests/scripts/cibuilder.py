@@ -44,15 +44,25 @@ class Test(object):
         # Expand system environment variables
         return os.path.expandvars(cmd)
 
-    def run_command(self, cmd, environment={}):
+    def run_command(self, cmd_str, environment={}):
         """
         """
-        self.expand_vars(cmd)
-        print(cmd)
+        self.expand_vars(cmd_str)
+        print(cmd_str)
+
         # Create copy of system environment and expand and add test environment
         env = os.environ.copy()
         env.update({k:self.expand_vars(v) for k,v in environment.items()})
-        subprocess.call(cmd.split(), env=env)
+
+        # Move leading variables in command into env
+        cmd = []
+        for part in cmd_str.split():
+            m = re.match("(.*?)=(.*)", part)
+            if len(cmd) == 0 and m:
+                env[m.group(1)] = self.expand_vars(m.group(2))
+            else:
+                cmd.append(part)
+        subprocess.call(cmd, env=env)
 
     def run_with_env(self, cmd):
         """
