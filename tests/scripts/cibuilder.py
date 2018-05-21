@@ -177,18 +177,18 @@ class ListSchema(Schema):
 
 
 class AttributeSchema(Schema):
-    _attributes = {}
+    _attributes = []
 
     def validate(self, data, tag=""):
         tag = self.update_tag(tag)
         if type(data) != dict:
             raise ValueError("%s Data type of '%s' should be dict." % (tag, self.get_name()))
-        for name, schema in self._attributes.items():
-            if name not in data:
+        for schema in self._attributes:
+            if schema.get_name() not in data:
                 if schema.is_mandatory:
-                    raise ValueError("%s '%s' not found in '%s'" % (tag, name, self.get_name()))
+                    raise ValueError("%s '%s' not found in '%s'" % (tag, schema.get_name(), self.get_name()))
             else:
-                schema.validate(data[name], tag)
+                schema.validate(data[schema.get_name()], tag)
 
 
 class StrSchema(Schema):
@@ -200,12 +200,12 @@ class StringDictSchema(DictSchema):
 
 
 class TestSchema(AttributeSchema):
-    _attributes = {
-        "environment": StringDictSchema("environment", False),
-        "build": StrSchema("build", False),
-        "script": StrSchema("script", False),
-        "tests": Schema("tests", False, list)
-    }
+    _attributes = [
+        StringDictSchema("environment", False),
+        StrSchema("build", False),
+        StrSchema("script", False),
+        Schema("tests", False, list)
+    ]
 
     def validate(self, data, tag=""):
         super(TestSchema, self).validate(data, tag)
@@ -237,10 +237,10 @@ class CampaignListSchema(ListSchema):
 
 
 class ComboSchema(AttributeSchema):
-    _attributes = {
-        "platforms": PlatformListSchema("platforms"),
-        "campaigns": CampaignListSchema("campaigns")
-    }
+    _attributes = [
+        PlatformListSchema("platforms"),
+        CampaignListSchema("campaigns")
+    ]
 
 
 class ComboList(ListSchema):
@@ -260,12 +260,12 @@ class TestScriptSequence(DictSchema):
 
 
 class RootSchema(AttributeSchema):
-    _attributes = {
-        "tests": TestSequence("tests"),
-        "campaigns": CampaignSequence("campaigns"),
-        "jobs": JobSequence("jobs"),
-        "test-scripts": TestScriptSequence("test-script", False)
-    }
+    _attributes = [
+        TestSequence("tests"),
+        CampaignSequence("campaigns"),
+        JobSequence("jobs"),
+        TestScriptSequence("test-script", False)
+    ]
 
 
 #####################################################################
