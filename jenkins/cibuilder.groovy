@@ -44,8 +44,8 @@ def create_subjob( test_name, platform, docker_lbl, src_stash_name ) {
                     deleteDir()
                     unstash src_stash_name
                     sh """
-./tests/scripts/cibuilder.py -e ${test_name}
-echo \"MBEDTLS_ROOT=.\" >> cienv.sh
+echo \"./tests/scripts/cibuilder.py test -r ${test_name}\" > /var/lib/build/tests/scripts/ciscript.sh
+chmod +x /var/lib/build/tests/scripts/ciscript.sh
 docker run --rm -u \$(id -u):\$(id -g) --entrypoint /var/lib/build/tests/scripts/ciscript.sh -w /var/lib/build -v `pwd`:/var/lib/build -v /home/ubuntu/.ssh:/home/mbedjenkins/.ssh --cap-add SYS_PTRACE ${platform}
 """
                 }
@@ -59,25 +59,18 @@ docker run --rm -u \$(id -u):\$(id -g) --entrypoint /var/lib/build/tests/scripts
                     unstash src_stash_name
                     if( platform in windows_labels ){
                         bat """
-python tests\\scripts\\cibuilder.py -e ${test_name}
-echo set MBEDTLS_ROOT=. >> cienv.bat
-.\\tests\\scripts\\ciscript.bat
+python tests\\scripts\\cibuilder.py test -r ${test_name}
 """
                     } else {
                         if( platform == "freebsd" ){
                             sh """
-/usr/local/bin/python2.7 ./tests/scripts/cibuilder.py -e ${test_name}
-echo \"export PYTHON=/usr/local/bin/python2.7\" >> cienv.sh
+/usr/local/bin/python2.7 ./tests/scripts/cibuilder.py test -r ${test_name}
 """
                         } else {
                             sh """
-./tests/scripts/cibuilder.py -e ${test_name}
+./tests/scripts/cibuilder.py test -r ${test_name}
 """
                         }
-                        sh """
-echo \"MBEDTLS_ROOT=.\" >> cienv.sh
-./tests/scripts/ciscript.sh
-"""
                     }
                 }
             }
@@ -86,7 +79,7 @@ echo \"MBEDTLS_ROOT=.\" >> cienv.sh
 }
 
 /**
- * \brief   Create steps for given campaign to execute in parallel.
+ * \brief   Create steps for given job to execute in parallel.
  *
  * \param test_name Campaign name from cijobs.json. Like: mbedtls-commit-tests
  * \param platform_to_docker_label_map
@@ -96,9 +89,9 @@ echo \"MBEDTLS_ROOT=.\" >> cienv.sh
  *
  * \return          Returns map[name:node block] for parallel command.
  */
-def create_parallel_jobs( campaign, platform_to_docker_label_map, src_stash_name ){
+def create_parallel_jobs( job_name, platform_to_docker_label_map, src_stash_name ){
     sh """
-./tests/scripts/cibuilder.py -l ${campaign} -o tests.txt
+./tests/scripts/cibuilder.py jobs -t ${job_name} >> tests.txt
     """
     def test_jobs = [:]
     def tests = readFile 'tests.txt'
@@ -108,12 +101,13 @@ def create_parallel_jobs( campaign, platform_to_docker_label_map, src_stash_name
     for( int i = 0; i < test_list.size(); i++ ) {
         def test = test_list[i]
         def test_details = test.split( '\\|' )
-        def test_name = test_details[0]
-        def platform = test_details[1]
+        def platform = test_details[0]
+        def test_name = test_details[1]
+        def test_name = test_name + "-" + platform
         def docker_lbl = platform_to_docker_label_map[platform]
-        def job = create_subjob( test_name, platform, docker_lbl, src_stash_name )
+        def job = create_subjob( label, test_name, platform, docker_lbl, src_stash_name )
         if( job ){
-            test_jobs[test_name] = job
+            test_jobs["$test_name-$platform"] = job
         } else {
             echo "Failed to create job for ${test_name} ${platform}"
         }
