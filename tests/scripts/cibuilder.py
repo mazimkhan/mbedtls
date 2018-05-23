@@ -1,4 +1,30 @@
 #!/usr/bin/env python
+# CI Build spec generator
+#
+# Copyright (C) 2018, ARM Limited, All Rights Reserved
+# SPDX-License-Identifier: Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); you may
+# not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# This file is part of Mbed TLS (https://tls.mbed.org)
+
+"""
+This script provides following features:
+- Introspect tests, campaigns and CI jobs
+- Execute tests
+- Take test, campaign and jobs input from mbedtls/tests/scripts/cijobs.json
+"""
+
 import os
 import re
 import sys
@@ -19,12 +45,22 @@ JSON_ROOT_KEY_JOBS = "jobs"
 
 class Test(object):
     """
+    Configure, build and test Mbed TLS for specified configuration.
     """
 
-    def __init__(self, config=None, set_config=[], unset_config=[],
-                 build=None, script=None, environment={}, tests=[],
-                 test_scripts={}):
+    def __init__(self, config, set_config, unset_config,
+                 build, script, environment, tests,
+                 test_scripts):
         """
+
+        :param config: (Optional) config defined by config.pl
+        :param set_config: List of macros to set in config.h
+        :param unset_config: List of macros to unset in config.h
+        :param build: Build type make/cmake. Mutually exclusive with script.
+        :param script: Script to run instead of a build.
+        :param environment: Test environment
+        :param tests: List of tests. Either a script path or link into test_scripts.
+        :param test_scripts: dict of test scripts specified in cijobs.json.
         """
         self.config = config
         self.set_config = set_config
@@ -37,6 +73,10 @@ class Test(object):
 
     def expand_vars(self, cmd):
         """
+        Expand variables in the command string.
+
+        :param cmd: Command to expands the environment variables.
+        :return: Returns expanded command.
         """
         # Expand test environment variables
         for name, value in self.environment.items():
@@ -44,17 +84,22 @@ class Test(object):
         # Expand system environment variables
         return os.path.expandvars(cmd)
 
-    def run_command(self, cmd_str, environment={}):
+    def run_command(self, cmd_str, environment=None):
         """
+        Run command with given environment.
+
+        :param cmd_str: Command to run.
+        :param environment: Environment dict k,v = env name, value
         """
         self.expand_vars(cmd_str)
         print(cmd_str)
 
         # Create copy of system environment and expand and add test environment
         env = os.environ.copy()
-        env.update({k:self.expand_vars(v) for k,v in environment.items()})
+        if environment:
+            env.update({k:self.expand_vars(v) for k,v in environment.items()})
 
-        # Move leading variables in command into env
+        # Extract leading variables in command and put into env
         cmd = []
         for part in cmd_str.split():
             m = re.match("(.*?)=(.*)", part)
@@ -66,14 +111,18 @@ class Test(object):
 
     def run_with_env(self, cmd):
         """
+        Run command with test variables.
+
+        :param cmd: Command to run.
         """
         self.run_command(cmd, environment=self.environment)
 
     def do_mbedtls_config(self):
         """
+        Perform Mbed TLS config by running config.pl script.
         """
         if self.config or self.set_config or self.unset_config:
-            pass # backup original config
+            pass # TODO backup original config
 
         if self.config:
             self.run_command("./scripts/config.pl %s" % self.config)
@@ -84,6 +133,10 @@ class Test(object):
 
     def check_environment(self, vars):
         """
+        Check if variables are defined in the test environment and exit with
+        error if not.
+
+        :param vars: Environment variables to check.
         """
         msg = "Mandatory environment variable '{var}' not specified!"
         errors = [msg.format(var=x) for x in vars if x not in self.environment]
