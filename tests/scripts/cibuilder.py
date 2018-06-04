@@ -29,6 +29,7 @@ import os
 import re
 import sys
 import json
+import shutil
 import argparse
 import subprocess
 
@@ -47,13 +48,17 @@ class Test(object):
     """
     Configure, build and test Mbed TLS for specified configuration.
     """
+    CONFIG_H = "include/mbedtls/config.h"
+    CONFIG_H_BAK = CONFIG_H + ".bak"
 
     def __init__(self, config, set_config, unset_config,
                  build, script, environment, tests,
                  test_scripts):
         """
+        Constructor expects mutually exclusive 'build' or 'script' to be passed by the creator. Rest of the parameters
+        are optional. It assumes parameters to be in expected format, since data validation is done prior to this call.
 
-        :param config: (Optional) config defined by config.pl
+        :param config: config defined by config.pl
         :param set_config: List of macros to set in config.h
         :param unset_config: List of macros to unset in config.h
         :param build: Build type make/cmake. Mutually exclusive with script.
@@ -119,10 +124,16 @@ class Test(object):
 
     def do_mbedtls_config(self):
         """
-        Perform Mbed TLS config by running config.pl script.
+        Perform Mbed TLS config by running config.pl script. Creates backup of existing config.h before changing it.
         """
         if self.config or self.set_config or self.unset_config:
-            pass # TODO backup original config
+            bakup_file = self.CONFIG_H_BAK
+            if os.path.exists(self.CONFIG_H_BAK):
+                enumerator = 0
+                while os.path.exists("%s.%d" % (self.CONFIG_H_BAK, enumerator)):
+                    enumerator += 1
+                bakup_file = "%s.%d" % (self.CONFIG_H_BAK, enumerator)
+            shutil.copy(self.CONFIG_H, bakup_file)
 
         if self.config:
             self.run_command("./scripts/config.pl %s" % self.config)
@@ -146,6 +157,7 @@ class Test(object):
 
     def do_make(self):
         """
+        Execute make build with the test environment.
         """
         self.check_environment(['MAKE', 'CC'])
         make_cmd = self.environment.get("MAKE", "make")
@@ -155,6 +167,7 @@ class Test(object):
 
     def do_cmake(self):
         """
+        Execute cmake build with the test environment.
         """
         make_cmd = self.environment.get("MAKE", "make")
         unsafe_build = self.environment.get("UNSAFE_BUILD", "OFF")
@@ -165,6 +178,10 @@ class Test(object):
 
     def run(self):
         """
+        Execute the test in following order:
+        1. Do Mbed TLS config.
+        2. Perform make or cmake build or execute a script.
+        3. Perform tests.
         """
         # config
         self.do_mbedtls_config()
@@ -193,20 +210,57 @@ class Test(object):
 
 
 class Schema(object):
+    """
+    Base schema class, it provides methods for validation of a JSON data element. It implements validation by type.
+    Example:
+
+        class StrSchema(Schema):
+            _type = str
+
+    Above schema validates an object of type string. 
+    """
     _type = None
 
     def __init__(self, name=None, is_mandatory=True, type=None):
+        """
+        Instantiate the object with element name, type and presence requirement.
+
+        :param name: Data element name
+        :param is_mandatory: True if element is mandatory
+        :param type: Element type
+        """
         self.name = name
         self.is_mandatory = is_mandatory
         if type:
             self._type = type
 
-    def get_name(self): return self.name
+    def get_name(self):
+        """
+        Gives field name.
+
+        :return: name string
+        """
+        return self.name
 
     def update_tag(self, tag):
+        """
+        Updates the tag with this element name. Tag string is useful while printing format validation error as it
+        indicates path of an element in the JSON document.
+
+        :param tag:
+        :return:
+        """
         return "->".join((tag, self.get_name())) if tag else self.name
 
     def validate(self, data, tag=""):
+        """
+        Validate schema. In this base class validation is done for specified object type. This method can be overriden
+        by derived classes implementing complex object schemas.
+
+        :param data:
+        :param tag:
+        :return:
+        """
         tag = self.update_tag(tag)
         if self._type == str:
             if type(data) not in (str, unicode):
@@ -214,10 +268,26 @@ class Schema(object):
         elif type(data) != self._type:
             raise ValueError("%s Key '%s' value should be of type %s" % (tag, self.get_name(), self._type))
 
+
 class DictSchema(Schema):
+    """
+    Schema for validating dict objects. A validator class can be created by simply inheriting this class and specifying
+    dictionary element types. Example:
+
+        class StringDictSchema(DictSchema):
+            _schema = StrSchema
+
+    Above is an example for validating a dictionary of strings.
+    """
     _schema = None
 
     def validate(self, data, tag=""):
+        """
+        Validates a dictionary object by validating each element with it's own schema.
+        :param data: 
+        :param tag: 
+        :return: 
+        """
         tag = self.update_tag(tag)
         if type(data) != dict:
             raise ValueError("%s Data type of '%s' should be dict." % (tag, self.get_name()))
@@ -228,10 +298,20 @@ class DictSchema(Schema):
             schema = self._schema(name)
             schema.validate(value, tag)
 
+
 class ListSchema(Schema):
+    """
+    Similar to DictSchema, but validates a list.
+    """
     _schema = None
 
     def validate(self, data, tag=""):
+        """
+        Validates a list object by validating each element with it's own schema.
+        :param data: 
+        :param tag: 
+        :return: 
+        """
         tag = self.update_tag(tag)
         if type(data) != list:
             raise ValueError("%s Data type of '%s' should be list." % (tag, self.get_name()))
@@ -240,6 +320,18 @@ class ListSchema(Schema):
 
 
 class AttributeSchema(Schema):
+    """
+    Validate a dictionary with specific keys (attribute names) and value (attribute value) types. Example:
+
+    class TestSchema(AttributeSchema):
+        _attributes = [
+            StringDictSchema("environment", False),
+            StrSchema("build", False),
+            StrSchema("script", False),
+            Schema("tests", False, list)
+        ]
+
+    """
     _attributes = []
 
     def validate(self, data, tag=""):
@@ -255,14 +347,19 @@ class AttributeSchema(Schema):
 
 
 class StrSchema(Schema):
+    """String object schema"""
     _type = str
 
 
 class StringDictSchema(DictSchema):
+    """Dictionary of sctrings schema."""
     _schema = StrSchema
 
 
 class TestSchema(AttributeSchema):
+    """
+    Test schema with member attributes.
+    """
     _attributes = [
         StringDictSchema("environment", False),
         StrSchema("build", False),
@@ -271,6 +368,13 @@ class TestSchema(AttributeSchema):
     ]
 
     def validate(self, data, tag=""):
+        """
+        Check either 'build' or 'script' is present in addition to base AttributeSchema Validation.
+
+        :param data: 
+        :param tag: 
+        :return: 
+        """
         super(TestSchema, self).validate(data, tag)
         tag = self.update_tag(tag)
         if "build" not in data and "script" not in data:
@@ -280,26 +384,34 @@ class TestSchema(AttributeSchema):
 
 
 class TestSequence(DictSchema):
+    """Tests dict {name: value} schema"""
     _schema = TestSchema
 
 
 class TestListSchema(ListSchema):
+    """Test list schema. Used for test commands list validation."""
     _schema = StrSchema("test")
 
 
 class CampaignSequence(DictSchema):
+    """Test Campaign dict schema"""
     _schema = TestListSchema
 
 
 class PlatformListSchema(ListSchema):
+    """Platform list"""
     _schema = StrSchema("platform")
 
 
 class CampaignListSchema(ListSchema):
+    """Campaign list"""
     _schema = StrSchema("campaigns")
 
 
 class ComboSchema(AttributeSchema):
+    """
+    Platforms x Campaigns combinations.
+    """
     _attributes = [
         PlatformListSchema("platforms"),
         CampaignListSchema("campaigns")
@@ -307,22 +419,33 @@ class ComboSchema(AttributeSchema):
 
 
 class ComboList(ListSchema):
+    """
+    List of Platforms x Campaigns
+    """
     _schema = ComboSchema("Platform & Campaign")
 
 
 class JobSequence(DictSchema):
+    """
+    Job schema containing list of Platforms x Campaigns combinations. 
+    """
     _schema = ComboList
 
 
 class TestScriptSchema(ListSchema):
+    """Test script a list of commands."""
     _schema = StrSchema("test-script")
 
 
 class TestScriptSequence(DictSchema):
+    """ List of test scripts"""
     _schema = TestScriptSchema
 
 
 class RootSchema(AttributeSchema):
+    """
+    Root schema with attributes: tests, test-script, campaigns and jobs.
+    """
     _attributes = [
         TestSequence("tests"),
         CampaignSequence("campaigns"),
@@ -337,9 +460,15 @@ class RootSchema(AttributeSchema):
 
 
 class CIDataParser(object):
+    """
+    Parser for cijobs.json. Provides data as requested by command line.
+    """
     CI_META_FILE="cijobs.json"
 
     def __init__(self):
+        """
+        Instantiate by reading CI data file and loading json data. 
+        """
         ci_data_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                 self.CI_META_FILE)
         with open(ci_data_file, 'r') as f:
@@ -347,25 +476,30 @@ class CIDataParser(object):
 
     def validate(self):
         """
+        Validate CI data file.
         """
         vr = RootSchema("root")
         vr.validate(self.ci_data)
 
     def get_campaigns(self):
+        """Get campaign names"""
         return sorted(self.ci_data[JSON_ROOT_KEY_CAMPAIGNS].keys())
 
     def get_tests_in_campaign(self, campaign_name):
         """
+        Get tests in campaign.
         """
         return sorted(self.ci_data[JSON_ROOT_KEY_CAMPAIGNS][campaign_name])
 
     def get_jobs(self):
         """
+        Get job names.
         """
         return sorted(self.ci_data[JSON_ROOT_KEY_JOBS].keys())
 
     def get_tests_in_job(self, job_name):
         """
+        Get tests in job.
         """
         job_data = self.ci_data[JSON_ROOT_KEY_JOBS][job_name]
         for combo in job_data:
@@ -379,10 +513,12 @@ class CIDataParser(object):
 
     def get_test_names(self):
         """
+        Get test names.
         """
         return sorted(self.ci_data["tests"].keys())
 
     def get_test(self, test_name):
+        """Gives Test object for specified test name."""
         assert test_name in self.ci_data["tests"], \
             "Test '%s' no found!" % test_name
         test_data = self.ci_data["tests"][test_name]
@@ -403,6 +539,9 @@ class CIDataParser(object):
 
 def test_opt_handler(args):
     """
+    Handler for test sub command options.
+    :param args: 
+    :return: 
     """
     parser = CIDataParser()
     if args.list_tests:
@@ -414,6 +553,11 @@ def test_opt_handler(args):
 
 
 def campaign_opt_handler(args):
+    """
+    Handler for campaign sub command options.
+    :param args: 
+    :return: 
+    """
     parser = CIDataParser()
 
     if args.list_campaigns:
@@ -424,60 +568,72 @@ def campaign_opt_handler(args):
 
 
 def job_opt_handler(args):
+    """
+    Handler for job sub command options.
+    :param args: 
+    :return: 
+    """
     parser = CIDataParser()
 
     if args.list_jobs:
         print("\n".join(parser.get_jobs()))
     elif args.list_tests:
         job_name = args.list_tests
-        for plaform, test in parser.get_tests_in_job(job_name):
-            print("%s|%s" % (plaform, test))
+        for platform, test in parser.get_tests_in_job(job_name):
+            print("%s|%s" % (platform, test))
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="List and execute tests.")
     subparsers = parser.add_subparsers(help='For help run: %(prog)s <sub-command> -h')
 
     # Parser for campaign options
-    campaign_parser = subparsers.add_parser('campaigns',
+    campaign_parser = subparsers.add_parser(
+        'campaigns',
         help='Campaign options')
-    campaign_parser.add_argument('-l', '--list',
+    campaign_parser.add_argument(
+        '-l', '--list',
         action='store_true',
         dest='list_campaigns',
         help='List campaigns')
-    campaign_parser.add_argument('-t', '--list-tests',
+    campaign_parser.add_argument(
+        '-t', '--list-tests',
         dest='list_tests',
         metavar="CAMPAIGN_NAME",
         help='List tests in a campaign')
     campaign_parser.set_defaults(func=campaign_opt_handler)
 
     # Parser for job options
-    job_parser = subparsers.add_parser('jobs',
+    job_parser = subparsers.add_parser(
+        'jobs',
         help='Job options')
-    job_parser.add_argument('-l', '--list',
+    job_parser.add_argument(
+        '-l', '--list',
         action='store_true',
         dest='list_jobs',
         help='List jobs')
-    job_parser.add_argument('-t', '--list-tests',
+    job_parser.add_argument(
+        '-t', '--list-tests',
         dest='list_tests',
         metavar="JOB_NAME",
         help='List tests in a job')
     job_parser.set_defaults(func=job_opt_handler)
 
     # Parser for test options
-    test_parser = subparsers.add_parser('test',
+    test_parser = subparsers.add_parser(
+        'test',
         help='Test options')
-    test_parser.add_argument('-l', '--list',
+    test_parser.add_argument(
+        '-l', '--list',
         action='store_true',
         dest='list_tests',
         help='List tests')
-    test_parser.add_argument('-r', '--run-test',
+    test_parser.add_argument(
+        '-r', '--run-test',
         dest='run_test',
         metavar="TEST_NAME",
         help='Run a test')
     test_parser.set_defaults(func=test_opt_handler)
-
-
     args = parser.parse_args()
     args.func(args)
 
