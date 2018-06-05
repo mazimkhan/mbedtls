@@ -7,7 +7,7 @@
         },
         "unix-make": {
             "build": "make",
-            "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "'-Werror -Wall -Wextra -Os'"}
+            "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "-Werror -Wall -Wextra -Os"}
         },
         "make-no-std-func-nv-seed": {
             "config": {
@@ -16,17 +16,17 @@
                 "unset": ["MBEDTLS_ENTROPY_NV_SEED"]
             },
             "build": "make",
-            "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "'-Werror -Wall -Wextra -O0'"}
+            "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "-Werror -Wall -Wextra -O0"}
         },
         "make-no-srv": {
             "config": {"config": "full", "unset": ["MBEDTLS_SSL_SRV_C"]},
             "build": "make",
-            "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "'-Werror -Wall -Wextra -O0'"}
+            "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "-Werror -Wall -Wextra -O0"}
         },
         "make-no-client": {
             "config": {"config": "full", "unset": ["MBEDTLS_SSL_CLI_C"]},
             "build": "make",
-            "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "'-Werror -Wall -Wextra -O0'"}
+            "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "-Werror -Wall -Wextra -O0"}
         },
         "make-no-net-entropy": {
             "config": {
@@ -35,7 +35,7 @@
                 "unset": ["MBEDTLS_NET_C"]
             },
             "build": "make",
-            "environment": {"MAKE": "make", "CC": "gcc", "MAKE_TARGET": "lib", "CFLAGS": "'-Werror -Wall -Wextra -O0 -std=c99 -pedantic'"}
+            "environment": {"MAKE": "make", "CC": "gcc", "MAKE_TARGET": "lib", "CFLAGS": "-Werror -Wall -Wextra -O0 -std=c99 -pedantic"}
         },
         "make-full-config": {
             "config": {
@@ -56,7 +56,7 @@
             },
             "build": "make",
             "environment": {"MAKE": "make", "CC": "gcc",
-                "CFLAGS": "'-Werror -Wall -Wextra -O0 -std=c99 -pedantic -D_DEFAULT_SOURCE'"},
+                "CFLAGS": "-Werror -Wall -Wextra -O0 -std=c99 -pedantic -D_DEFAULT_SOURCE"},
             "tests": ["make test", "./programs/test/selftest"]
         },
         "make-shared": {
@@ -65,26 +65,26 @@
         },
         "make-i386-on-x64": {
             "build": "make",
-            "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "'-Werror -Wall -Wextra -m32'"},
+            "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "-Werror -Wall -Wextra -m32"},
             "tests": ["make test", "./programs/test/selftest"]
         },
         "make-ilp32-on-x64": {
             "build": "make",
-            "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "'-Werror -Wall -Wextra -mx32'"},
+            "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "-Werror -Wall -Wextra -mx32"},
             "tests": ["make test", "./programs/test/selftest"]
         },
         "make-32bit-bignum-limbs": {
             "config": {"unset": ["MBEDTLS_HAVE_ASM", "MBEDTLS_AESNI_C", "MBEDTLS_PADLOCK_C"]},
             "build": "make",
             "environment": {"MAKE": "make", "CC": "gcc",
-                            "CFLAGS": "'-Werror -Wall -Wextra -DMBEDTLS_HAVE_INT32'"},
+                            "CFLAGS": "-Werror -Wall -Wextra -DMBEDTLS_HAVE_INT32"},
             "tests": ["make test", "./programs/test/selftest"]
         },
         "make-64bit-bignum-limbs": {
             "config": {"unset": ["MBEDTLS_HAVE_ASM", "MBEDTLS_AESNI_C", "MBEDTLS_PADLOCK_C"]},
             "build": "make",
             "environment": {"MAKE": "make", "CC": "gcc",
-                            "CFLAGS": "'-Werror -Wall -Wextra -DMBEDTLS_HAVE_INT64'"},
+                            "CFLAGS": "-Werror -Wall -Wextra -DMBEDTLS_HAVE_INT64"},
             "tests": ["make test", "./programs/test/selftest"]
         },
         "make-gcc-arm": {
@@ -92,7 +92,7 @@
             "build": "make",
             "environment": {"MAKE": "make", "CC": "arm-none-eabi-gcc",
                             "AR": "arm-none-eabi-ar", "LD": "arm-none-eabi-ld",
-                            "CFLAGS": "'-Werror -Wall -Wextra'",
+                            "CFLAGS": "-Werror -Wall -Wextra",
                             "MAKE_TARGET": "lib"}
         },
         "make-gcc-arm-no-udbl": {
@@ -100,7 +100,7 @@
             "build": "make",
             "environment": {"MAKE": "make", "CC": "arm-none-eabi-gcc",
                             "AR": "arm-none-eabi-ar", "LD": "arm-none-eabi-ld",
-                            "CFLAGS": "'-Werror -Wall -Wextra'",
+                            "CFLAGS": "-Werror -Wall -Wextra",
                             "MAKE_TARGET": "lib"},
             "tests": ["! grep __aeabi_uldiv library/*.o"]
         },
@@ -109,7 +109,7 @@
             "build": "make",
             "environment": {"MAKE": "make", "CC": "$ARMC5_BIN_DIR/armcc",
                             "AR": "$ARMC5_BIN_DIR/armar",
-                            "WARNING_CFLAGS": "'--strict --c99'",
+                            "WARNING_CFLAGS": "--strict --c99",
                             "MAKE_TARGET": "lib"}
         },
         "make-arm6-v7-a": {
@@ -118,8 +118,8 @@
             "environment": {"MAKE": "make", "CC": "$ARMC6_BIN_DIR/armclang",
                             "ARM_TOOL_VARIANT": "ult",
                             "AR": "$ARMC6_BIN_DIR/armar",
-                            "WARNING_CFLAGS": "'-xc -std=c99'",
-                            "CFLAGS": "'--target=arm-arm-none-eabi -march=armv7-a'",
+                            "WARNING_CFLAGS": "-xc -std=c99",
+                            "CFLAGS": "--target=arm-arm-none-eabi -march=armv7-a",
                             "MAKE_TARGET": "lib"}
         },
         "make-arm6-v7-m": {
@@ -128,8 +128,8 @@
             "environment": {"MAKE": "make", "CC": "$ARMC6_BIN_DIR/armclang",
                             "ARM_TOOL_VARIANT": "ult",
                             "AR": "$ARMC6_BIN_DIR/armar",
-                            "WARNING_CFLAGS": "'-xc -std=c99'",
-                            "CFLAGS": "'--target=arm-arm-none-eabi -march=armv7-m'",
+                            "WARNING_CFLAGS": "-xc -std=c99",
+                            "CFLAGS": "--target=arm-arm-none-eabi -march=armv7-m",
                             "MAKE_TARGET": "lib"}
         },
         "make-arm6-v8.2-a": {
@@ -138,8 +138,8 @@
             "environment": {"MAKE": "make", "CC": "$ARMC6_BIN_DIR/armclang",
                             "ARM_TOOL_VARIANT": "ult",
                             "AR": "$ARMC6_BIN_DIR/armar",
-                            "WARNING_CFLAGS": "'-xc -std=c99'",
-                            "CFLAGS": "'--target=arm-arm-none-eabi -march=armv8.2-a'",
+                            "WARNING_CFLAGS": "-xc -std=c99",
+                            "CFLAGS": "--target=arm-arm-none-eabi -march=armv8.2-a",
                             "MAKE_TARGET": "lib"}
         },
         "make-arm6-v8.2-a-64bit": {
@@ -148,8 +148,8 @@
             "environment": {"MAKE": "make", "CC": "$ARMC6_BIN_DIR/armclang",
                             "ARM_TOOL_VARIANT": "ult",
                             "AR": "$ARMC6_BIN_DIR/armar",
-                            "WARNING_CFLAGS": "'-xc -std=c99'",
-                            "CFLAGS": "'--target=aarch64-arm-none-eabi -march=armv8.2-a'",
+                            "WARNING_CFLAGS": "-xc -std=c99",
+                            "CFLAGS": "--target=aarch64-arm-none-eabi -march=armv8.2-a",
                             "MAKE_TARGET": "lib"}
         },
         "make-arm6-v8-m.main": {
@@ -158,41 +158,41 @@
             "environment": {"MAKE": "make", "CC": "$ARMC6_BIN_DIR/armclang",
                             "ARM_TOOL_VARIANT": "ult",
                             "AR": "$ARMC6_BIN_DIR/armar",
-                            "WARNING_CFLAGS": "'-xc -std=c99'",
-                            "CFLAGS": "'--target=arm-arm-none-eabi -march=armv8-m.main'",
+                            "WARNING_CFLAGS": "-xc -std=c99",
+                            "CFLAGS": "--target=arm-arm-none-eabi -march=armv8-m.main",
                             "MAKE_TARGET": "lib"}
         },
         "make-allow-sha1-certs": {
             "config": {"set": ["MBEDTLS_TLS_DEFAULT_ALLOW_SHA1_IN_CERTIFICATES"]},
             "build": "make",
-            "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "'-Werror -Wall -Wextra'"},
+            "environment": {"MAKE": "make", "CC": "gcc", "CFLAGS": "-Werror -Wall -Wextra"},
             "tests": ["make test", "./programs/test/selftest", "./tests/ssl-opt.sh -f \"SHA-1\""]
         },
         "cross-build-windows": {
             "build": "make",
             "environment": {"MAKE": "make", "CC": "i686-w64-mingw32-gcc",
                             "AR": "i686-w64-mingw32-ar", "LD": "i686-w64-minggw32-ld",
-                            "CFLAGS": "'-Werror -Wall -Wextra'", "WINDOWS_BUILD": "1",
-                            "MAKE_TARGET": "'lib programs'"}
+                            "CFLAGS": "-Werror -Wall -Wextra", "WINDOWS_BUILD": "1",
+                            "MAKE_TARGET": "lib programs"}
         },
         "cross-build-tests-windows": {
             "build": "make",
             "environment": {"MAKE": "make", "CC": "i686-w64-mingw32-gcc",
                             "AR": "i686-w64-mingw32-ar", "LD": "i686-w64-minggw32-ld",
-                            "CFLAGS": "'-Werror'", "WINDOWS_BUILD": "1"}
+                            "CFLAGS": "-Werror", "WINDOWS_BUILD": "1"}
         },
         "cross-build-dll": {
             "build": "make",
             "environment": {"MAKE": "make", "CC": "i686-w64-mingw32-gcc",
                             "AR": "i686-w64-mingw32-ar", "LD": "i686-w64-minggw32-ld",
-                            "CFLAGS": "'-Werror -Wall -Wextra'", "WINDOWS_BUILD": "1",
-                            "SHARED": "1", "MAKE_TARGET": "'lib programs'"}
+                            "CFLAGS": "-Werror -Wall -Wextra", "WINDOWS_BUILD": "1",
+                            "SHARED": "1", "MAKE_TARGET": "lib programs"}
         },
         "cross-build-tests-dll": {
             "build": "make",
             "environment": {"MAKE": "make", "CC": "i686-w64-mingw32-gcc",
                             "AR": "i686-w64-mingw32-ar", "LD": "i686-w64-minggw32-ld",
-                            "CFLAGS": "'-Werror'", "WINDOWS_BUILD": "1",
+                            "CFLAGS": "-Werror", "WINDOWS_BUILD": "1",
                             "SHARED": "1"}
         },
         "cmake": {
@@ -240,7 +240,7 @@
             },
             "build": "cmake",
             "environment": {"MAKE": "make", "CC": "gcc", "UNSAFE_BUILD": "ON",
-                "CFLAGS": "'-fsanitize=address -fno-common -O3'"},
+                "CFLAGS": "-fsanitize=address -fno-common -O3"},
             "tests": ["ctest -vv"]
         },
         "cmake-asan-rsa-no-crt": {
