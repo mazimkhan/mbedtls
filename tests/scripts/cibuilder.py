@@ -29,6 +29,7 @@ import os
 import re
 import sys
 import json
+import shlex
 import shutil
 import argparse
 import subprocess
@@ -106,7 +107,7 @@ class Test(object):
 
         # Extract leading variables in command and put into env
         cmd = []
-        for part in cmd_str.split():
+        for part in shlex.split(cmd_str):
             m = re.match("(.*?)=(.*)", part)
             if len(cmd) == 0 and m:
                 env[m.group(1)] = self.expand_vars(m.group(2))
