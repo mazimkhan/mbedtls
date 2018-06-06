@@ -102,7 +102,7 @@
                             "AR": "arm-none-eabi-ar", "LD": "arm-none-eabi-ld",
                             "CFLAGS": "-Werror -Wall -Wextra",
                             "MAKE_TARGET": "lib"},
-            "tests": ["! grep __aeabi_uldiv library/*.o"]
+            "tests": ["!grep __aeabi_uldiv library/*.o"]
         },
         "make-arm5": {
             "config": {"config": "baremetal"},
