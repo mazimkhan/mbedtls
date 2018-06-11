@@ -31,6 +31,7 @@ import sys
 import json
 import shlex
 import shutil
+import signal
 import argparse
 import subprocess
 
@@ -90,6 +91,20 @@ class Test(object):
         # Expand system environment variables
         return os.path.expandvars(cmd)
 
+    @staticmethod
+    def on_child_signalled(signum, frame):
+        print("Signal %d received!" % signum)
+
+    @staticmethod
+    def on_child_startup():
+        # Ignore signals in subprocess to avoid unintentional termination.
+        for attr in [x for x in dir(signal) if x.startswith("SIG")]:
+            try:
+                signum = getattr(signal, attr)
+                signal.signal(signum, Test.on_child_signalled)
+            except Exception:
+                print("Unable to handle signal: %s", attr)
+
     def run_command(self, cmd_str, environment=None):
         """
         Run command with given environment.
@@ -113,7 +128,12 @@ class Test(object):
                 env[m.group(1)] = self.expand_vars(m.group(2))
             else:
                 cmd.append(part)
-        subprocess.call(cmd, env=env)
+        p = subprocess.Popen(cmd, env=env, stderr=subprocess.STDOUT,
+                             preexec_fn=self.on_child_startup)
+        p.wait()
+        if p.returncode and p.returncode != 0:
+            raise Exception("The command \"%s\" exited with %d." % \
+                           (cmd_str, p.returncode))
 
     def run_with_env(self, cmd):
         """
