@@ -78,19 +78,6 @@ class Test(object):
         self.tests = tests
         self.test_scripts = test_scripts
 
-    def expand_vars(self, cmd):
-        """
-        Expand variables in the command string.
-
-        :param cmd: Command to expands the environment variables.
-        :return: Returns expanded command.
-        """
-        # Expand test environment variables
-        for name, value in self.environment.items():
-            cmd = re.sub("(\${name})|(\$\{{{name}}})".format(name=name), value, cmd)
-        # Expand system environment variables
-        return os.path.expandvars(cmd)
-
     @staticmethod
     def on_child_signalled(signum, frame):
         print("Signal %d received!" % signum)
@@ -112,22 +99,20 @@ class Test(object):
         :param cmd_str: Command to run.
         :param environment: Environment dict k,v = env name, value
         """
-        self.expand_vars(cmd_str)
-        print(cmd_str)
-
         # Create copy of system environment and expand and add test environment
         env = os.environ.copy()
-        if environment:
-            env.update({k:self.expand_vars(v) for k,v in environment.items()})
 
         # Extract leading variables in command and put into env
         cmd = []
         for part in shlex.split(cmd_str):
             m = re.match("(.*?)=(.*)", part)
             if len(cmd) == 0 and m:
-                env[m.group(1)] = self.expand_vars(m.group(2))
+                env[m.group(1)] = m.group(2)
             else:
                 cmd.append(part)
+        env = {k: os.path.expandvars(v) for k,v in env.items()}
+        print(cmd_str)
+
         p = subprocess.Popen(cmd, env=env, stderr=subprocess.STDOUT,
                              preexec_fn=self.on_child_startup)
         p.wait()
