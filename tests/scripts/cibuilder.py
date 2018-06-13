@@ -101,6 +101,8 @@ class Test(object):
         """
         # Create copy of system environment and expand and add test environment
         env = os.environ.copy()
+        if environment:
+            env.update(environment)
 
         # Extract leading variables in command and put into env
         cmd = []
@@ -177,7 +179,7 @@ class Test(object):
         """
         make_cmd = self.environment.get("MAKE", "make")
         unsafe_build = self.environment.get("UNSAFE_BUILD", "OFF")
-        cmake_build_type = self.environment.get("CMAKE_BUILD_TYPE", "Check")
+        cmake_build_type = self.environment.get("CMAKE_BUILD_TYPE", "")
         pwd = os.path.abspath(os.path.curdir)
         self.run_with_env("cmake -D UNSAFE_BUILD=%s -D CMAKE_BUILD_TYPE:String=%s %s" % (unsafe_build, cmake_build_type, pwd))
         self.do_make()
