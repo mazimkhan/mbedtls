@@ -29,10 +29,12 @@ import os
 import re
 import sys
 import json
+import types
 import shlex
 import shutil
 import signal
 import argparse
+import importlib
 import subprocess
 
 
@@ -205,11 +207,14 @@ class Test(object):
 
         # test
         for test in self.tests:
-            if test in self.test_scripts:
-                for cmd in self.test_scripts[test]:
-                    self.run_with_env(cmd)
+            if isinstance(test, types.FunctionType):
+                assert test() == True, "Test %s returned False" % getattr(a, '__name__', '')
             else:
-                self.run_with_env(test)
+                if test in self.test_scripts:
+                    for cmd in self.test_scripts[test]:
+                        self.run_with_env(cmd)
+                else:
+                    self.run_with_env(test)
 
 
 #####################################################################
@@ -471,16 +476,14 @@ class CIDataParser(object):
     """
     Parser for cijobs.json. Provides data as requested by command line.
     """
-    CI_META_FILE="cijobs.json"
+    CI_META_MODULE = "cijobs"
 
     def __init__(self):
         """
-        Instantiate by reading CI data file and loading json data. 
+        Instantiate by importing job config.
         """
-        ci_data_file = os.path.join(os.path.dirname(os.path.realpath(__file__)),
-                self.CI_META_FILE)
-        with open(ci_data_file, 'r') as f:
-            self.ci_data = json.load(f)
+        m = importlib.import_module(self.CI_META_MODULE)
+        self.ci_data = m.data
 
     def validate(self):
         """

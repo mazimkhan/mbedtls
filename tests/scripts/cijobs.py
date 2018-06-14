@@ -1,4 +1,10 @@
-{
+import os
+
+def check_no_udbl():
+    ret = os.system("grep __aeabi_uldiv library/*.o")
+    return (ret != 0)
+
+data = {
     "tests": {
         "make-gcc": {
             "build": "make",
@@ -102,7 +108,7 @@
                             "AR": "arm-none-eabi-ar", "LD": "arm-none-eabi-ld",
                             "CFLAGS": "-Werror -Wall -Wextra",
                             "MAKE_TARGET": "lib"},
-            "tests": ["!grep __aeabi_uldiv library/*.o"]
+            "tests": [check_no_udbl]
         },
         "make-arm5": {
             "config": {"config": "baremetal"},
@@ -363,7 +369,7 @@
                       "check-doxy-blocks", "check-names", "check-doxygen"]
     },
     "jobs": {
-        "mbedtls-commit-tests": [{ 
+        "mbedtls-commit-tests": [{
             "platforms": ["debian-i386", "debian-x64"],
             "campaigns": ["linux-tests1"]
         }, {
