@@ -905,6 +905,8 @@ for optimization_flag in -O2 -O3 -Ofast -Os; do
     done
 done
 
+msg "Analyse: Python source with Pylint"
+tests/scripts/check-python-files.sh
 
 
 ################################################################
