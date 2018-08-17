@@ -345,12 +345,14 @@ class BuildInfo(object):
         assert test_name in self.ci_data["tests"], \
             "Test '%s' no found!" % test_name
         test_data = self.ci_data["tests"][test_name]
-        return Test(config = test_data.get("config", {}).get("config", None),
-                    set_config = test_data.get("config", {}).get("set", []),
-                    unset_config = test_data.get("config", {}).get("unset", []),
-                    build = test_data.get("build", None),
-                    script = test_data.get("script", None),
-                    environment = test_data.get("environment", {}),
-                    tests = test_data.get('tests', []),
-                    test_scripts=self.ci_data.get("test-scripts", {}))
+        test_info = dict()
+        test_info["config"] = test_data.get("config", {}).get("config", None)
+        test_info["set_config"] = test_data.get("config", {}).get("set", [])
+        test_info["unset_config"] = test_data.get("config", {}).get("unset", [])
+        test_info["build"] = test_data.get("build", None)
+        test_info["script"] = test_data.get("script", None)
+        test_info["environment"] = test_data.get("environment", {})
+        test_info["tests"] = test_data.get('tests', [])
+        test_info["test_scripts"]=self.ci_data.get("test-scripts", {})
+        return test_info
 

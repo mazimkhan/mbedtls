@@ -86,7 +86,7 @@ class Test(object):
                 signum = getattr(signal, attr)
                 signal.signal(signum, Test.on_child_signalled)
             except Exception:
-                print("Unable to handle signal: %s", attr)
+                pass
 
     def run_command(self, cmd_str, environment=None):
         """
@@ -232,7 +232,8 @@ def test_opt_handler(args):
         for test in parser.get_test_names():
             print(test)
     elif args.run_test:
-        test = parser.get_test(args.run_test)
+        test_info = parser.get_test(args.run_test)
+        test = Test(**test_info)
         test.run()
 
 
@@ -249,6 +250,16 @@ def campaign_opt_handler(args):
     elif args.list_tests:
         campaign_name = args.list_tests
         print("\n".join(parser.get_tests_in_campaign(campaign_name)))
+    elif args.run_tests:
+        campaign_name = args.run_tests
+        tests = parser.get_tests_in_campaign(campaign_name)
+        for test_name in tests:
+            print("*********************************************")
+            print("Running test: %s" % test_name)
+            print("*********************************************")
+            test_info = parser.get_test(test_name)
+            test = Test(**test_info)
+            test.run()
 
 
 def job_opt_handler(args):
@@ -285,6 +296,11 @@ if __name__ == '__main__':
         dest='list_tests',
         metavar="CAMPAIGN_NAME",
         help='List tests in a campaign')
+    campaign_parser.add_argument(
+        '-r', '--run-tests',
+        dest='run_tests',
+        metavar="CAMPAIGN_NAME",
+        help='Run tests in a campaign')
     campaign_parser.set_defaults(func=campaign_opt_handler)
 
     # Parser for job options
