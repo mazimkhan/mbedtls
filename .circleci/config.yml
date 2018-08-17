@@ -24,3 +24,7 @@ jobs:
           name: echo
           command: echo "Hello World"
 
+      - run:
+          name: Builder
+          command: ./tests/scripts/builder.py campaigns -r all-tests
+
