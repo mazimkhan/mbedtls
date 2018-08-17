@@ -4,9 +4,9 @@ jobs:
   build:
     docker:
       - image: armmbed/mbedtls-ubuntu-16.04:0.0.1
+    steps:
+      - checkout
+      - run: ./tests/scripts/builder.py campaigns -r all-tests
     filters:
       branches:
         only: jenkinsfile
-    steps:
-      - checkout
-      - ./tests/scripts/builder.py campaigns -r all-tests
