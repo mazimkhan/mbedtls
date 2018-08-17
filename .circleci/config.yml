@@ -22,5 +22,5 @@ jobs:
 
       - run:
           name: echo
-          command: "Hello World"
+          command: echo "Hello World"
 
