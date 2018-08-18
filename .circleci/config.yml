@@ -25,6 +25,24 @@ jobs:
           command: echo "Hello World"
 
       - run:
-          name: Builder
+          name: list files
           command: ls -ltr;echo "***************";ls -ltr /
+  release:
+    <<: *defaults
+    steps:
+      - attach_workspace:
+        at: /
+      - run:
+          name: list files
+          command: ls -ltr
 
+
+workflows:
+  version: 2
+
+  btd:
+    jobs:
+      - scm
+      - release:
+        requires:
+          - flow
