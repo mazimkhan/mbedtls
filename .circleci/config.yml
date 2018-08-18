@@ -18,7 +18,8 @@ jobs:
           path: src
 
       - persist_to_workspace:
-          root: src
+          root: ~/repo
+          path: src
 
       - run:
           name: echo
