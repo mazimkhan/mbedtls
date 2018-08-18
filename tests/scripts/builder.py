@@ -48,6 +48,7 @@ class Build(object):
     """
     CONFIG_H = "include/mbedtls/config.h"
     CONFIG_H_BAK = CONFIG_H + ".bak"
+    CLEANUP_SCRIPT = './tests/scripts/cleanup.sh'
 
     def __init__(self, config, set_config, unset_config,
                  build, script, environment, tests,
@@ -187,6 +188,10 @@ class Build(object):
         2. Perform make or cmake build or execute a script.
         3. Perform tests.
         """
+        # Call cleanup first, since there may be left over build artefact from
+        # the previous build.
+        self.cleanup()
+
         # config
         self.do_mbedtls_config()
 
@@ -209,6 +214,13 @@ class Build(object):
                         self.run_with_env(cmd)
                 else:
                     self.run_with_env(test)
+
+    def cleanup(self):
+        """
+        Clean the workspace, remove generated build artefacts and restore
+        config.
+        """
+        self.run_with_env(self.CLEANUP_SCRIPT)
 
 
 #####################################################################
