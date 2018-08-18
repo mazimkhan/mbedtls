@@ -36,7 +36,6 @@ jobs:
           name: list files
           command: ls -ltr
 
-
 workflows:
   version: 2
 
