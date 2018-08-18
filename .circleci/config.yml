@@ -15,10 +15,10 @@ jobs:
 
     steps:
       - checkout:
-        path: src
+          path: src
 
       - persist_to_workspace:
-        root: src
+          root: src
 
       - run:
           name: echo
@@ -31,7 +31,7 @@ jobs:
     <<: *defaults
     steps:
       - attach_workspace:
-        at: /
+          at: /
       - run:
           name: list files
           command: ls -ltr
@@ -42,5 +42,5 @@ workflows:
     jobs:
       - scm
       - release:
-        requires:
-          - scm
+          requires:
+            - scm
