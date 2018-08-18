@@ -44,4 +44,4 @@ workflows:
       - scm
       - release:
         requires:
-          - flow
+          - scm
