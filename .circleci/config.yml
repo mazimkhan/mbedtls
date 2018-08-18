@@ -2,7 +2,7 @@
 #
 
 defaults: &defaults
-  working_directory: ~/src
+  working_directory: ~/repo
   docker:
     - image: armmbed/mbedtls-ubuntu-16.04:0.0.1
 
@@ -19,7 +19,8 @@ jobs:
 
       - persist_to_workspace:
           root: ~/repo
-          path: src
+          path:
+            - src
 
       - run:
           name: echo
@@ -32,7 +33,7 @@ jobs:
     <<: *defaults
     steps:
       - attach_workspace:
-          at: /
+          at: .
       - run:
           name: list files
           command: ls -ltr
