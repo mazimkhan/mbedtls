@@ -9,40 +9,32 @@ defaults: &defaults
 version: 2
 jobs:
   scm:
-    working_directory: ~/repo
+    working_directory: ~/
     docker:
       - image: armmbed/mbedtls-ubuntu-16.04:0.0.1
 
     steps:
       - checkout:
-          path: src
+          path: mbedtls
 
       - persist_to_workspace:
-          root: ~/repo
+          root: ~/
           paths:
-            - src
-
-      - run:
-          name: echo
-          command: echo "Hello World"
-
-      - run:
-          name: list files
-          command: ls -ltr;echo "***************";ls -ltr /
-  release:
+            - mbedtls
+  sample_job:
     <<: *defaults
     steps:
       - attach_workspace:
           at: .
       - run:
           name: list files
-          command: ls -ltr
+          command: ls -ltr mbedtls/
 
 workflows:
   version: 2
-  btd:
+  sample_workflow:
     jobs:
       - scm
-      - release:
+      - sample_job:
           requires:
             - scm
