@@ -20,9 +20,9 @@
 
 """
 This script provides following features:
-- Introspect tests, campaigns and CI jobs
-- Execute tests
-- Take test, campaign and jobs input from mbedtls/tests/scripts/build_info.py
+- Introspect builds, campaigns and CI jobs
+- Execute builds
+- Take build, campaign and jobs input from mbedtls/tests/scripts/build_info.py
 """
 
 import os
@@ -38,11 +38,11 @@ from build_info_parser import BuildInfo
 
 
 #####################################################################
-# Test execution
+# Build execution
 #####################################################################
 
 
-class Test(object):
+class Build(object):
     """
     Configure, build and test Mbed TLS for specified configuration.
     """
@@ -61,7 +61,7 @@ class Test(object):
         :param unset_config: List of macros to unset in config.h
         :param build: Build type make/cmake. Mutually exclusive with script.
         :param script: Script to run instead of a build.
-        :param environment: Test environment
+        :param environment: Build environment
         :param tests: List of tests. Either a script path or link into test_scripts.
         :param test_scripts: dict of test scripts specified in build_info.py.
         """
@@ -84,7 +84,7 @@ class Test(object):
         for attr in [x for x in dir(signal) if x.startswith("SIG")]:
             try:
                 signum = getattr(signal, attr)
-                signal.signal(signum, Test.on_child_signalled)
+                signal.signal(signum, Build.on_child_signalled)
             except Exception:
                 pass
 
@@ -182,7 +182,7 @@ class Test(object):
 
     def run(self):
         """
-        Execute the test in following order:
+        Execute the build in following order:
         1. Do Mbed TLS config.
         2. Perform make or cmake build or execute a script.
         3. Perform tests.
@@ -221,20 +221,20 @@ class Test(object):
 #####################################################################
 
 
-def test_opt_handler(args):
+def build_opt_handler(args):
     """
-    Handler for test sub command options.
+    Handler for build sub command options.
     :param args:
     :return:
     """
     parser = BuildInfo()
-    if args.list_tests:
-        for test in parser.get_test_names():
-            print(test)
-    elif args.run_test:
-        test_info = parser.get_test(args.run_test)
-        test = Test(**test_info)
-        test.run()
+    if args.list_builds:
+        for build in parser.get_build_names():
+            print(build)
+    elif args.run_build:
+        build_info = parser.get_build(args.run_build)
+        build = Build(**build_info)
+        build.run()
 
 
 def campaign_opt_handler(args):
@@ -247,19 +247,19 @@ def campaign_opt_handler(args):
 
     if args.list_campaigns:
         print("\n".join(parser.get_campaigns()))
-    elif args.list_tests:
-        campaign_name = args.list_tests
-        print("\n".join(parser.get_tests_in_campaign(campaign_name)))
-    elif args.run_tests:
-        campaign_name = args.run_tests
-        tests = parser.get_tests_in_campaign(campaign_name)
-        for test_name in tests:
+    elif args.list_builds:
+        campaign_name = args.list_builds
+        print("\n".join(parser.get_builds_in_campaign(campaign_name)))
+    elif args.run_builds:
+        campaign_name = args.run_builds
+        builds = parser.get_builds_in_campaign(campaign_name)
+        for build_name in builds:
             print("*********************************************")
-            print("Running test: %s" % test_name)
+            print("Running build: %s" % build_name)
             print("*********************************************")
-            test_info = parser.get_test(test_name)
-            test = Test(**test_info)
-            test.run()
+            build_info = parser.get_build(build_name)
+            build = Build(**build_info)
+            build.run()
 
 
 def job_opt_handler(args):
@@ -272,14 +272,14 @@ def job_opt_handler(args):
 
     if args.list_jobs:
         print("\n".join(parser.get_jobs()))
-    elif args.list_tests:
-        job_name = args.list_tests
-        for platform, test in parser.get_tests_in_job(job_name):
-            print("%s|%s" % (platform, test))
+    elif args.list_builds:
+        job_name = args.list_builds
+        for platform, build in parser.get_builds_in_job(job_name):
+            print("%s|%s" % (platform, build))
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="List and execute tests.")
+    parser = argparse.ArgumentParser(description="List and execute builds.")
     subparsers = parser.add_subparsers(help='For help run: %(prog)s <sub-command> -h')
 
     # Parser for campaign options
@@ -292,15 +292,15 @@ if __name__ == '__main__':
         dest='list_campaigns',
         help='List campaigns')
     campaign_parser.add_argument(
-        '-t', '--list-tests',
-        dest='list_tests',
+        '-t', '--list-builds',
+        dest='list_builds',
         metavar="CAMPAIGN_NAME",
-        help='List tests in a campaign')
+        help='List builds in a campaign')
     campaign_parser.add_argument(
-        '-r', '--run-tests',
-        dest='run_tests',
+        '-r', '--run-builds',
+        dest='run_builds',
         metavar="CAMPAIGN_NAME",
-        help='Run tests in a campaign')
+        help='Run builds in a campaign')
     campaign_parser.set_defaults(func=campaign_opt_handler)
 
     # Parser for job options
@@ -313,27 +313,27 @@ if __name__ == '__main__':
         dest='list_jobs',
         help='List jobs')
     job_parser.add_argument(
-        '-t', '--list-tests',
-        dest='list_tests',
+        '-t', '--list-builds',
+        dest='list_builds',
         metavar="JOB_NAME",
-        help='List tests in a job')
+        help='List builds in a job')
     job_parser.set_defaults(func=job_opt_handler)
 
-    # Parser for test options
-    test_parser = subparsers.add_parser(
-        'test',
-        help='Test options')
-    test_parser.add_argument(
+    # Parser for build options
+    build_parser = subparsers.add_parser(
+        'build',
+        help='Build options')
+    build_parser.add_argument(
         '-l', '--list',
         action='store_true',
-        dest='list_tests',
-        help='List tests')
-    test_parser.add_argument(
-        '-r', '--run-test',
-        dest='run_test',
+        dest='list_builds',
+        help='List builds')
+    build_parser.add_argument(
+        '-r', '--run-build',
+        dest='run_build',
         metavar="TEST_NAME",
-        help='Run a test')
-    test_parser.set_defaults(func=test_opt_handler)
+        help='Run a build')
+    build_parser.set_defaults(func=build_opt_handler)
     args = parser.parse_args()
     args.func(args)
 

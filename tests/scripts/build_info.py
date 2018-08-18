@@ -5,7 +5,7 @@ def check_no_udbl():
     return (ret != 0)
 
 data = {
-    "tests": {
+    "builds": {
         "make-gcc": {
             "build": "make",
             "environment": {"MAKE": "make", "CC": "gcc"},

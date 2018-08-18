@@ -26,9 +26,9 @@ specified in build_info.py).
 import importlib
 
 
-JSON_ROOT_KEY_TESTS = "tests"
-JSON_ROOT_KEY_CAMPAIGNS = "campaigns"
-JSON_ROOT_KEY_JOBS = "jobs"
+ROOT_KEY_BUILDS = "builds"
+ROOT_KEY_CAMPAIGNS = "campaigns"
+ROOT_KEY_JOBS = "jobs"
 
 
 class Schema(object):
@@ -205,12 +205,12 @@ class TestSchema(AttributeSchema):
         super(TestSchema, self).validate(data, tag)
         tag = self.update_tag(tag)
         if "build" not in data and "script" not in data:
-            raise ValueError("%s Neither 'build' nor 'script' present in test '%s'" % (tag, self.get_name()))
+            raise ValueError("%s Neither 'build' nor 'script' present in build '%s'" % (tag, self.get_name()))
         if "build" in data and "script" in data:
-            raise ValueError("%s Both 'build' and 'script' specified in test '%s'" % (tag, self.get_name()))
+            raise ValueError("%s Both 'build' and 'script' specified in build '%s'" % (tag, self.get_name()))
 
 
-class TestSequence(DictSchema):
+class BuildSequence(DictSchema):
     """Tests dict {name: value} schema"""
     _schema = TestSchema
 
@@ -232,7 +232,7 @@ class PlatformListSchema(ListSchema):
 
 class CampaignListSchema(ListSchema):
     """Campaign list"""
-    _schema = StrSchema("campaigns")
+    _schema = StrSchema(ROOT_KEY_CAMPAIGNS)
 
 
 class ComboSchema(AttributeSchema):
@@ -241,7 +241,7 @@ class ComboSchema(AttributeSchema):
     """
     _attributes = [
         PlatformListSchema("platforms"),
-        CampaignListSchema("campaigns")
+        CampaignListSchema(ROOT_KEY_CAMPAIGNS)
     ]
 
 
@@ -271,12 +271,12 @@ class TestScriptSequence(DictSchema):
 
 class RootSchema(AttributeSchema):
     """
-    Root schema with attributes: tests, test-script, campaigns and jobs.
+    Root schema with attributes: builds, test-script, campaigns and jobs.
     """
     _attributes = [
-        TestSequence("tests"),
-        CampaignSequence("campaigns"),
-        JobSequence("jobs"),
+        BuildSequence(ROOT_KEY_BUILDS),
+        CampaignSequence(ROOT_KEY_CAMPAIGNS),
+        JobSequence(ROOT_KEY_JOBS),
         TestScriptSequence("test-script", False)
     ]
 
@@ -306,53 +306,53 @@ class BuildInfo(object):
 
     def get_campaigns(self):
         """Get campaign names"""
-        return sorted(self.ci_data[JSON_ROOT_KEY_CAMPAIGNS].keys())
+        return sorted(self.ci_data[ROOT_KEY_CAMPAIGNS].keys())
 
-    def get_tests_in_campaign(self, campaign_name):
+    def get_builds_in_campaign(self, campaign_name):
         """
-        Get tests in campaign.
+        Get builds in campaign.
         """
-        return sorted(self.ci_data[JSON_ROOT_KEY_CAMPAIGNS][campaign_name])
+        return sorted(self.ci_data[ROOT_KEY_CAMPAIGNS][campaign_name])
 
     def get_jobs(self):
         """
         Get job names.
         """
-        return sorted(self.ci_data[JSON_ROOT_KEY_JOBS].keys())
+        return sorted(self.ci_data[ROOT_KEY_JOBS].keys())
 
-    def get_tests_in_job(self, job_name):
+    def get_builds_in_job(self, job_name):
         """
-        Get tests in job.
+        Get builds in job.
         """
-        job_data = self.ci_data[JSON_ROOT_KEY_JOBS][job_name]
+        job_data = self.ci_data[ROOT_KEY_JOBS][job_name]
         for combo in job_data:
             platforms = combo["platforms"]
-            campaigns = combo[JSON_ROOT_KEY_CAMPAIGNS]
+            campaigns = combo[ROOT_KEY_CAMPAIGNS]
             for platform in sorted(platforms):
                 for campaign in campaigns:
-                    tests = self.get_tests_in_campaign(campaign)
-                    for test in tests:
-                        yield platform, test
+                    builds = self.get_builds_in_campaign(campaign)
+                    for build in builds:
+                        yield platform, build
 
-    def get_test_names(self):
+    def get_build_names(self):
         """
-        Get test names.
+        Get build names.
         """
-        return sorted(self.ci_data["tests"].keys())
+        return sorted(self.ci_data[ROOT_KEY_BUILDS].keys())
 
-    def get_test(self, test_name):
-        """Gives Test object for specified test name."""
-        assert test_name in self.ci_data["tests"], \
-            "Test '%s' no found!" % test_name
-        test_data = self.ci_data["tests"][test_name]
-        test_info = dict()
-        test_info["config"] = test_data.get("config", {}).get("config", None)
-        test_info["set_config"] = test_data.get("config", {}).get("set", [])
-        test_info["unset_config"] = test_data.get("config", {}).get("unset", [])
-        test_info["build"] = test_data.get("build", None)
-        test_info["script"] = test_data.get("script", None)
-        test_info["environment"] = test_data.get("environment", {})
-        test_info["tests"] = test_data.get('tests', [])
-        test_info["test_scripts"]=self.ci_data.get("test-scripts", {})
-        return test_info
+    def get_build(self, build_name):
+        """Gives Test object for specified build name."""
+        assert build_name in self.ci_data[ROOT_KEY_BUILDS], \
+            "Test '%s' no found!" % build_name
+        build_data = self.ci_data[ROOT_KEY_BUILDS][build_name]
+        build_info = dict()
+        build_info["config"] = build_data.get("config", {}).get("config", None)
+        build_info["set_config"] = build_data.get("config", {}).get("set", [])
+        build_info["unset_config"] = build_data.get("config", {}).get("unset", [])
+        build_info["build"] = build_data.get("build", None)
+        build_info["script"] = build_data.get("script", None)
+        build_info["environment"] = build_data.get("environment", {})
+        build_info["tests"] = build_data.get('tests', [])
+        build_info["test_scripts"]=self.ci_data.get("test-scripts", {})
+        return build_info
 
