@@ -366,7 +366,8 @@ data = {
                       "cross-build-dll", "cross-build-tests-dll",
                       "cmake-memsan", "cmake-release", "cmake-out-of-src",
                       "check-recursion", "check-generated-files",
-                      "check-doxy-blocks", "check-names", "check-doxygen"]
+                      "check-doxy-blocks", "check-names", "check-doxygen"],
+        "all.sh": ["all.sh"],
     },
     "jobs": {
         "mbedtls-commit-tests": [{
