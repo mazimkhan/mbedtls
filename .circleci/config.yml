@@ -340,7 +340,8 @@ workflows:
     jobs:
     - scm:
         filters:
-          branches: &id001 [development]
+          branches:
+            only: &id001 [development]
     - check-doxy-blocks-ubuntu-16.04-x64:
         filters:
           branches:
@@ -520,7 +521,8 @@ workflows:
     jobs:
     - scm:
         filters:
-          branches: &id002 [release-test]
+          branches:
+            only: &id002 [release-test]
     - check-doxy-blocks-ubuntu-16.04-x64:
         filters:
           branches:
