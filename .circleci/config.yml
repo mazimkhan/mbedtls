@@ -8,7 +8,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r check-doxy-blocks,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r check-doxy-blocks,
         name: check-doxy-blocks}
     working_directory: ~/
   check-doxygen-ubuntu-17.10-x64:
@@ -16,7 +17,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r check-doxygen,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r check-doxygen,
         name: check-doxygen}
     working_directory: ~/
   check-generated-files-ubuntu-17.10-x64:
@@ -24,7 +26,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r check-generated-files,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r check-generated-files,
         name: check-generated-files}
     working_directory: ~/
   check-names-ubuntu-17.10-x64:
@@ -32,7 +35,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r check-names,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r check-names,
         name: check-names}
     working_directory: ~/
   check-recursion-ubuntu-17.10-x64:
@@ -40,7 +44,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r check-recursion,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r check-recursion,
         name: check-recursion}
     working_directory: ~/
   cmake-asan-debian-i386:
@@ -48,23 +53,24 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r cmake-asan,
-        name: cmake-asan}
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r cmake-asan, name: cmake-asan}
     working_directory: ~/
   cmake-asan-debian-x64:
     docker:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r cmake-asan,
-        name: cmake-asan}
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r cmake-asan, name: cmake-asan}
     working_directory: ~/
   cmake-asan-gcc-no-max-fragment-len-ubuntu-17.10-x64:
     docker:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r cmake-asan-gcc-no-max-fragment-len,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r cmake-asan-gcc-no-max-fragment-len,
         name: cmake-asan-gcc-no-max-fragment-len}
     working_directory: ~/
   cmake-asan-gcc-no-renegotiation-ubuntu-17.10-x64:
@@ -72,7 +78,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r cmake-asan-gcc-no-renegotiation,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r cmake-asan-gcc-no-renegotiation,
         name: cmake-asan-gcc-no-renegotiation}
     working_directory: ~/
   cmake-asan-gcc-sslv3-ubuntu-17.10-x64:
@@ -80,7 +87,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r cmake-asan-gcc-sslv3,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r cmake-asan-gcc-sslv3,
         name: cmake-asan-gcc-sslv3}
     working_directory: ~/
   cmake-asan-gcc-test-null-entropy-ubuntu-17.10-x64:
@@ -88,7 +96,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r cmake-asan-gcc-test-null-entropy,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r cmake-asan-gcc-test-null-entropy,
         name: cmake-asan-gcc-test-null-entropy}
     working_directory: ~/
   cmake-asan-gcc-ubuntu-17.10-x64:
@@ -96,7 +105,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r cmake-asan-gcc,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r cmake-asan-gcc,
         name: cmake-asan-gcc}
     working_directory: ~/
   cmake-asan-rsa-no-crt-ubuntu-17.10-x64:
@@ -104,7 +114,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r cmake-asan-rsa-no-crt,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r cmake-asan-rsa-no-crt,
         name: cmake-asan-rsa-no-crt}
     working_directory: ~/
   cmake-clang-freebsd:
@@ -112,7 +123,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r cmake-clang,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r cmake-clang,
         name: cmake-clang}
     working_directory: ~/
   cmake-clang-full-config-ubuntu-17.10-x64:
@@ -120,7 +132,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r cmake-clang-full-config,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r cmake-clang-full-config,
         name: cmake-clang-full-config}
     working_directory: ~/
   cmake-debian-i386:
@@ -128,37 +141,40 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r cmake, name: cmake}
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r cmake, name: cmake}
     working_directory: ~/
   cmake-debian-x64:
     docker:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r cmake, name: cmake}
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r cmake, name: cmake}
     working_directory: ~/
   cmake-full-debian-i386:
     docker:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r cmake-full,
-        name: cmake-full}
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r cmake-full, name: cmake-full}
     working_directory: ~/
   cmake-full-debian-x64:
     docker:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r cmake-full,
-        name: cmake-full}
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r cmake-full, name: cmake-full}
     working_directory: ~/
   cmake-memsan-ubuntu-17.10-x64:
     docker:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r cmake-memsan,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r cmake-memsan,
         name: cmake-memsan}
     working_directory: ~/
   cmake-out-of-src-ubuntu-17.10-x64:
@@ -166,7 +182,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r cmake-out-of-src,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r cmake-out-of-src,
         name: cmake-out-of-src}
     working_directory: ~/
   cmake-release-ubuntu-17.10-x64:
@@ -174,7 +191,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r cmake-release,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r cmake-release,
         name: cmake-release}
     working_directory: ~/
   cross-build-dll-ubuntu-17.10-x64:
@@ -182,7 +200,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r cross-build-dll,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r cross-build-dll,
         name: cross-build-dll}
     working_directory: ~/
   cross-build-tests-dll-ubuntu-17.10-x64:
@@ -190,7 +209,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r cross-build-tests-dll,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r cross-build-tests-dll,
         name: cross-build-tests-dll}
     working_directory: ~/
   cross-build-tests-windows-ubuntu-17.10-x64:
@@ -198,7 +218,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r cross-build-tests-windows,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r cross-build-tests-windows,
         name: cross-build-tests-windows}
     working_directory: ~/
   cross-build-windows-ubuntu-17.10-x64:
@@ -206,7 +227,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r cross-build-windows,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r cross-build-windows,
         name: cross-build-windows}
     working_directory: ~/
   curves-ubuntu-17.10-x64:
@@ -214,14 +236,16 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r curves, name: curves}
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r curves, name: curves}
     working_directory: ~/
   gmake-clang-freebsd:
     docker:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r gmake-clang,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r gmake-clang,
         name: gmake-clang}
     working_directory: ~/
   keyexchanges-ubuntu-17.10-x64:
@@ -229,7 +253,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r keyexchanges,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r keyexchanges,
         name: keyexchanges}
     working_directory: ~/
   make-32bit-bignum-limbs-ubuntu-17.10-x64:
@@ -237,7 +262,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r make-32bit-bignum-limbs,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r make-32bit-bignum-limbs,
         name: make-32bit-bignum-limbs}
     working_directory: ~/
   make-allow-sha1-certs-ubuntu-17.10-x64:
@@ -245,7 +271,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r make-allow-sha1-certs,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r make-allow-sha1-certs,
         name: make-allow-sha1-certs}
     working_directory: ~/
   make-arm5-ubuntu-17.10-x64:
@@ -253,14 +280,16 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r make-arm5, name: make-arm5}
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r make-arm5, name: make-arm5}
     working_directory: ~/
   make-arm6-v7-a-ubuntu-17.10-x64:
     docker:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r make-arm6-v7-a,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r make-arm6-v7-a,
         name: make-arm6-v7-a}
     working_directory: ~/
   make-arm6-v7-m-ubuntu-17.10-x64:
@@ -268,7 +297,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r make-arm6-v7-m,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r make-arm6-v7-m,
         name: make-arm6-v7-m}
     working_directory: ~/
   make-arm6-v8-m.main-ubuntu-17.10-x64:
@@ -276,7 +306,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r make-arm6-v8-m.main,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r make-arm6-v8-m.main,
         name: make-arm6-v8-m.main}
     working_directory: ~/
   make-arm6-v8.2-a-64bit-ubuntu-17.10-x64:
@@ -284,7 +315,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r make-arm6-v8.2-a-64bit,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r make-arm6-v8.2-a-64bit,
         name: make-arm6-v8.2-a-64bit}
     working_directory: ~/
   make-arm6-v8.2-a-ubuntu-17.10-x64:
@@ -292,7 +324,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r make-arm6-v8.2-a,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r make-arm6-v8.2-a,
         name: make-arm6-v8.2-a}
     working_directory: ~/
   make-full-config-ubuntu-17.10-x64:
@@ -300,7 +333,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r make-full-config,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r make-full-config,
         name: make-full-config}
     working_directory: ~/
   make-gcc-arm-no-udbl-ubuntu-17.10-x64:
@@ -308,7 +342,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r make-gcc-arm-no-udbl,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r make-gcc-arm-no-udbl,
         name: make-gcc-arm-no-udbl}
     working_directory: ~/
   make-gcc-arm-ubuntu-17.10-x64:
@@ -316,7 +351,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r make-gcc-arm,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r make-gcc-arm,
         name: make-gcc-arm}
     working_directory: ~/
   make-gcc-debian-i386:
@@ -324,21 +360,24 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r make-gcc, name: make-gcc}
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r make-gcc, name: make-gcc}
     working_directory: ~/
   make-gcc-debian-x64:
     docker:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r make-gcc, name: make-gcc}
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r make-gcc, name: make-gcc}
     working_directory: ~/
   make-i386-on-x64-ubuntu-17.10-x64:
     docker:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r make-i386-on-x64,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r make-i386-on-x64,
         name: make-i386-on-x64}
     working_directory: ~/
   make-ilp32-on-x64-ubuntu-17.10-x64:
@@ -346,7 +385,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r make-ilp32-on-x64,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r make-ilp32-on-x64,
         name: make-ilp32-on-x64}
     working_directory: ~/
   make-no-client-ubuntu-17.10-x64:
@@ -354,7 +394,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r make-no-client,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r make-no-client,
         name: make-no-client}
     working_directory: ~/
   make-no-net-entropy-ubuntu-17.10-x64:
@@ -362,7 +403,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r make-no-net-entropy,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r make-no-net-entropy,
         name: make-no-net-entropy}
     working_directory: ~/
   make-no-srv-ubuntu-17.10-x64:
@@ -370,7 +412,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r make-no-srv,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r make-no-srv,
         name: make-no-srv}
     working_directory: ~/
   make-no-std-func-nv-seed-ubuntu-17.10-x64:
@@ -378,7 +421,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r make-no-std-func-nv-seed,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r make-no-std-func-nv-seed,
         name: make-no-std-func-nv-seed}
     working_directory: ~/
   make-shared-ubuntu-17.10-x64:
@@ -386,7 +430,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r make-shared,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r make-shared,
         name: make-shared}
     working_directory: ~/
   mingw-make-windows-tls:
@@ -394,29 +439,32 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r mingw-make,
-        name: mingw-make}
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r mingw-make, name: mingw-make}
     working_directory: ~/
   msvc12-32-windows-tls:
     docker:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r msvc12-32, name: msvc12-32}
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r msvc12-32, name: msvc12-32}
     working_directory: ~/
   msvc12-64-windows-tls:
     docker:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r msvc12-64, name: msvc12-64}
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r msvc12-64, name: msvc12-64}
     working_directory: ~/
   print-environment-ubuntu-17.10-x64:
     docker:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r print-environment,
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r print-environment,
         name: print-environment}
     working_directory: ~/
   scm:
@@ -433,7 +481,8 @@ jobs:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
     steps:
     - attach_workspace: {at: ~/}
-    - run: {command: cd mbedtls & ./tests/scripts/builder.py build -r unix-make, name: unix-make}
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r unix-make, name: unix-make}
     working_directory: ~/
 version: 2
 workflows:
