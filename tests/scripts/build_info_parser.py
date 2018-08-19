@@ -296,6 +296,7 @@ class BuildInfo(object):
         """
         m = importlib.import_module(self.CI_META_MODULE)
         self.ci_data = m.data
+        self.validate()
 
     def validate(self):
         """
