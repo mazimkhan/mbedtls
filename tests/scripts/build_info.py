@@ -116,7 +116,8 @@ data = {
             "environment": {"MAKE": "make", "CC": "$ARMC5_BIN_DIR/armcc",
                             "AR": "$ARMC5_BIN_DIR/armar",
                             "WARNING_CFLAGS": "--strict --c99",
-                            "MAKE_TARGET": "lib"}
+                            "MAKE_TARGET": "lib"},
+            "requires": ["armc5"]
         },
         "make-arm6-v7-a": {
             "config": {"config": "baremetal"},
@@ -126,7 +127,8 @@ data = {
                             "AR": "$ARMC6_BIN_DIR/armar",
                             "WARNING_CFLAGS": "-xc -std=c99",
                             "CFLAGS": "--target=arm-arm-none-eabi -march=armv7-a",
-                            "MAKE_TARGET": "lib"}
+                            "MAKE_TARGET": "lib"},
+            "requires": ["armc6"]
         },
         "make-arm6-v7-m": {
             "config": {"config": "baremetal"},
@@ -136,7 +138,8 @@ data = {
                             "AR": "$ARMC6_BIN_DIR/armar",
                             "WARNING_CFLAGS": "-xc -std=c99",
                             "CFLAGS": "--target=arm-arm-none-eabi -march=armv7-m",
-                            "MAKE_TARGET": "lib"}
+                            "MAKE_TARGET": "lib"},
+            "requires": ["armc6"]
         },
         "make-arm6-v8.2-a": {
             "config": {"config": "baremetal"},
@@ -146,7 +149,8 @@ data = {
                             "AR": "$ARMC6_BIN_DIR/armar",
                             "WARNING_CFLAGS": "-xc -std=c99",
                             "CFLAGS": "--target=arm-arm-none-eabi -march=armv8.2-a",
-                            "MAKE_TARGET": "lib"}
+                            "MAKE_TARGET": "lib"},
+            "requires": ["armc6"]
         },
         "make-arm6-v8.2-a-64bit": {
             "config": {"config": "baremetal"},
@@ -156,7 +160,8 @@ data = {
                             "AR": "$ARMC6_BIN_DIR/armar",
                             "WARNING_CFLAGS": "-xc -std=c99",
                             "CFLAGS": "--target=aarch64-arm-none-eabi -march=armv8.2-a",
-                            "MAKE_TARGET": "lib"}
+                            "MAKE_TARGET": "lib"},
+            "requires": ["armc6"]
         },
         "make-arm6-v8-m.main": {
             "config": {"config": "baremetal"},
@@ -166,7 +171,8 @@ data = {
                             "AR": "$ARMC6_BIN_DIR/armar",
                             "WARNING_CFLAGS": "-xc -std=c99",
                             "CFLAGS": "--target=arm-arm-none-eabi -march=armv8-m.main",
-                            "MAKE_TARGET": "lib"}
+                            "MAKE_TARGET": "lib"},
+            "requires": ["armc6"]
         },
         "make-allow-sha1-certs": {
             "config": {"set": ["MBEDTLS_TLS_DEFAULT_ALLOW_SHA1_IN_CERTIFICATES"]},

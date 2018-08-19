@@ -142,15 +142,16 @@ class ListSchema(Schema):
         tag = self.update_tag(tag)
         if type(data) != list:
             raise ValueError("%s Data type of '%s' should be list." % (tag, self.get_name()))
+        schema = self._schema("list")
         for element in data:
-            self._schema.validate(element, tag)
+            schema.validate(element, tag)
 
 
 class AttributeSchema(Schema):
     """
     Validate a dictionary with specific keys (attribute names) and value (attribute value) types. Example:
 
-    class TestSchema(AttributeSchema):
+    class BuildSchema(AttributeSchema):
         _attributes = [
             StringDictSchema("environment", False),
             StrSchema("build", False),
@@ -171,6 +172,11 @@ class AttributeSchema(Schema):
                     raise ValueError("%s '%s' not found in '%s'" % (tag, schema.get_name(), self.get_name()))
             else:
                 schema.validate(data[schema.get_name()], tag)
+        known_attributes = [schema.get_name() for schema in self._attributes]
+        for key in data.keys():
+            if key not in known_attributes:
+                    raise ValueError("%s Unknown attribute '%s' found in '%s'"
+                    % (tag, key, self.get_name()))
 
 
 class StrSchema(Schema):
@@ -179,19 +185,36 @@ class StrSchema(Schema):
 
 
 class StringDictSchema(DictSchema):
-    """Dictionary of sctrings schema."""
+    """Dictionary of strings schema."""
     _schema = StrSchema
 
 
-class TestSchema(AttributeSchema):
+class StrListSchema(ListSchema):
+    """String list schema."""
+    _schema = StrSchema
+
+
+class ConfigSchema(AttributeSchema):
+    """
+    Schema for config item in a build.
+    """
+    _attributes = [
+        StrSchema("config", False),
+        StrListSchema("set", False),
+        StrListSchema("unset", False),
+    ]
+
+class BuildSchema(AttributeSchema):
     """
     Test schema with member attributes.
     """
     _attributes = [
         StringDictSchema("environment", False),
+        ConfigSchema("config", False),
         StrSchema("build", False),
         StrSchema("script", False),
-        Schema("tests", False, list)
+        Schema("tests", False, list),
+        StrListSchema("requires", False),
     ]
 
     def validate(self, data, tag=""):
@@ -202,7 +225,7 @@ class TestSchema(AttributeSchema):
         :param tag:
         :return:
         """
-        super(TestSchema, self).validate(data, tag)
+        super(BuildSchema, self).validate(data, tag)
         tag = self.update_tag(tag)
         if "build" not in data and "script" not in data:
             raise ValueError("%s Neither 'build' nor 'script' present in build '%s'" % (tag, self.get_name()))
@@ -212,27 +235,22 @@ class TestSchema(AttributeSchema):
 
 class BuildSequence(DictSchema):
     """Tests dict {name: value} schema"""
-    _schema = TestSchema
-
-
-class TestListSchema(ListSchema):
-    """Test list schema. Used for test commands list validation."""
-    _schema = StrSchema("test")
+    _schema = BuildSchema
 
 
 class CampaignSequence(DictSchema):
     """Test Campaign dict schema"""
-    _schema = TestListSchema
+    _schema = StrListSchema
 
 
 class PlatformListSchema(ListSchema):
     """Platform list"""
-    _schema = StrSchema("platform")
+    _schema = StrSchema
 
 
 class CampaignListSchema(ListSchema):
     """Campaign list"""
-    _schema = StrSchema(ROOT_KEY_CAMPAIGNS)
+    _schema = StrSchema
 
 
 class ComboSchema(AttributeSchema):
@@ -249,7 +267,7 @@ class ComboList(ListSchema):
     """
     List of Platforms x Campaigns
     """
-    _schema = ComboSchema("Platform & Campaign")
+    _schema = ComboSchema
 
 
 class JobSequence(DictSchema):
@@ -261,7 +279,7 @@ class JobSequence(DictSchema):
 
 class TestScriptSchema(ListSchema):
     """Test script a list of commands."""
-    _schema = StrSchema("test-script")
+    _schema = StrSchema
 
 
 class TestScriptSequence(DictSchema):
@@ -271,13 +289,13 @@ class TestScriptSequence(DictSchema):
 
 class RootSchema(AttributeSchema):
     """
-    Root schema with attributes: builds, test-script, campaigns and jobs.
+    Root schema with attributes: builds, test-scripts, campaigns and jobs.
     """
     _attributes = [
         BuildSequence(ROOT_KEY_BUILDS),
         CampaignSequence(ROOT_KEY_CAMPAIGNS),
         JobSequence(ROOT_KEY_JOBS),
-        TestScriptSequence("test-script", False)
+        TestScriptSequence("test-scripts", False)
     ]
 
 
@@ -357,3 +375,7 @@ class BuildInfo(object):
         build_info["test_scripts"]=self.ci_data.get("test-scripts", {})
         return build_info
 
+
+if __name__=="__main__":
+    build_info = BuildInfo()
+    print("Build info valid!")
