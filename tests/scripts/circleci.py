@@ -9,6 +9,14 @@ circleci_platforms = {
     "ubuntu-16.04-x64" : {
         "image": "armmbed/mbedtls-ubuntu-16.04:0.0.1",
         "has" : ['linux']
+    },
+    "debian-i386" : {
+        "image": "armmbed/mbedtls-debian-9-i386:0.0.1",
+        "has" : ['linux']
+    },
+    "debian-x64" : {
+        "image": "armmbed/mbedtls-debian-9-x64:0.0.1",
+        "has" : ['linux']
     }
 }
 
