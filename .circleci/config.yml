@@ -3,6 +3,15 @@ defaults:
   - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
   working_directory: ~/repo
 jobs:
+  basic-build-test-ubuntu-16.04-x64:
+    docker:
+    - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
+    steps:
+    - attach_workspace: {at: ~/}
+    - run: {command: ls -ltr; ls -ltr mbedtls, name: check files}
+    - run: {command: cd mbedtls; ./tests/scripts/builder.py build -r basic-build-test,
+        name: basic-build-test}
+    working_directory: ~/
   check-doxy-blocks-ubuntu-16.04-x64:
     docker:
     - {image: 'armmbed/mbedtls-ubuntu-16.04:0.0.1'}
@@ -331,146 +340,361 @@ workflows:
     jobs:
     - scm
     - check-doxy-blocks-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: &id001 [development]
         requires: [scm]
     - check-doxygen-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - check-generated-files-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - check-names-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - check-recursion-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - cmake-asan-gcc-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - cmake-asan-gcc-no-max-fragment-len-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - cmake-asan-gcc-no-renegotiation-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - cmake-asan-gcc-sslv3-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - cmake-asan-gcc-test-null-entropy-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - cmake-asan-rsa-no-crt-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - cmake-clang-full-config-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - cmake-memsan-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - cmake-out-of-src-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - cmake-release-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - cross-build-dll-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - cross-build-tests-dll-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - cross-build-tests-windows-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - cross-build-windows-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - curves-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - keyexchanges-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - make-32bit-bignum-limbs-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - make-allow-sha1-certs-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - make-full-config-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - make-gcc-arm-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - make-gcc-arm-no-udbl-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - make-i386-on-x64-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - make-ilp32-on-x64-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - make-no-client-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - make-no-net-entropy-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - make-no-srv-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - make-no-std-func-nv-seed-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - make-shared-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - print-environment-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
     - unix-make-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id001
         requires: [scm]
   release-tests:
     jobs:
     - scm
     - check-doxy-blocks-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: &id002 [release-test]
         requires: [scm]
     - check-doxygen-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - check-generated-files-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - check-names-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - check-recursion-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - cmake-asan-gcc-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - cmake-asan-gcc-no-max-fragment-len-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - cmake-asan-gcc-no-renegotiation-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - cmake-asan-gcc-sslv3-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - cmake-asan-gcc-test-null-entropy-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - cmake-asan-rsa-no-crt-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - cmake-clang-full-config-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - cmake-memsan-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - cmake-out-of-src-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - cmake-release-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - cross-build-dll-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - cross-build-tests-dll-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - cross-build-tests-windows-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - cross-build-windows-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - curves-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - keyexchanges-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - make-32bit-bignum-limbs-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - make-allow-sha1-certs-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - make-full-config-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - make-gcc-arm-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - make-gcc-arm-no-udbl-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - make-i386-on-x64-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - make-ilp32-on-x64-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - make-no-client-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - make-no-net-entropy-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - make-no-srv-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - make-no-std-func-nv-seed-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - make-shared-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - print-environment-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
     - unix-make-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
+        requires: [scm]
+    - basic-build-test-ubuntu-16.04-x64:
+        filters:
+          branches:
+            only: *id002
         requires: [scm]
   version: 2

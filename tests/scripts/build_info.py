@@ -333,6 +333,9 @@ data = {
         },
         "check-doxygen": {
             "script": "./tests/scripts/doxygen.sh"
+        },
+        "basic-build-test": {
+            "script": "./tests/scripts/basic-build-test.sh"
         }
     },
     "test-scripts": {
@@ -374,9 +377,10 @@ data = {
                       "check-recursion", "check-generated-files",
                       "check-doxy-blocks", "check-names", "check-doxygen"],
         "all.sh": ["all.sh"],
+        "basic-build-test": ["basic-build-test"],
     },
     "jobs": {
-        "mbedtls-commit-tests": [{
+        "commit-tests": [{
             "platforms": ["debian-i386", "debian-x64"],
             "campaigns": ["linux-tests1"]
         }, {
@@ -388,7 +392,7 @@ data = {
         }],
         "release-tests": [{
             "platforms": ["ubuntu-16.04-x64"],
-            "campaigns": ["all-tests"]
+            "campaigns": ["all-tests", "basic-build-test"]
         }],
         "nightly": [{
             "platforms": ["debian-i386", "debian-x64"],

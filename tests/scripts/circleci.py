@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import sys
 import yaml
 import json
 from build_info_parser import BuildInfo
@@ -9,6 +10,12 @@ circleci_platforms = {
         "image": "armmbed/mbedtls-ubuntu-16.04:0.0.1",
         "has" : ['linux']
     }
+}
+
+circleci_branches = {
+    "nightly": ["development"],
+    "release-tests": ["release-test"],
+    "commit-tests": ["/^pull\/.*$/"],
 }
 
 def generate_jobs():
@@ -34,8 +41,6 @@ def generate_jobs():
             capabilities = circleci_platform_info.get('has', [])
             requirements = build_data['requirements']
             if requirements:
-                print("Build %s has requirements %s" % (build_name,
-                str(requirements)))
                 platform_is_suitable = True
                 for requirement in requirements:
                     if requirement not in capabilities:
@@ -85,8 +90,16 @@ def generate_jobs():
 
             # Worflows
             workflow_job = dict();
-            workflow_job[circleci_job_name] = { "requires": ["scm"]}
+            workflow_job[circleci_job_name] = { "requires": ["scm"] }
+            if job_name in circleci_branches:
+                workflow_job[circleci_job_name]["filters"] = {
+                    'branches':
+                    {
+                        'only': circleci_branches[job_name]
+                    }
+                }
             workflow_jobs.append(workflow_job)
+
 
         if workflow_jobs:
             workflow['jobs'] = ["scm"] + workflow_jobs
@@ -100,20 +113,28 @@ def update_circleci_yaml():
     config = None
     with open(".circleci/config.yml", "r") as f:
         config = yaml.load(f)
-        #print json.dumps(y, indent=4)
     # Keep job 'scm' and remove rest
     jobs, workflows = generate_jobs()
     scm = config['jobs']['scm']
     config['jobs'] = {'scm': scm}
     config['jobs'].update(jobs)
     config['workflows'] = {'version': config['workflows']['version']}
-    #print json.dumps(workflows, indent=4)
     config['workflows'].update(workflows)
     with open(".circleci/config.yml", "w") as f:
         yaml.dump(config, f, indent=2)
-    #print json.dumps(config, indent=4)
+
+
+def dump_json():
+    with open(".circleci/config.yml", "r") as f:
+        config = yaml.load(f)
+        print json.dumps(config, indent=4)
 
 
 if __name__=="__main__":
-    update_circleci_yaml()
-    #print_yml()
+    if len(sys.argv) > 1:
+        if sys.argv[1] in ['-j', '--dump-json']:
+            dump_json()
+        else:
+            print("Unknown argument %s" % sys.argv[1])
+    else:
+        update_circleci_yaml()
