@@ -338,11 +338,13 @@ version: 2
 workflows:
   nightly:
     jobs:
-    - scm
+    - scm:
+        filters:
+          branches: &id001 [development]
     - check-doxy-blocks-ubuntu-16.04-x64:
         filters:
           branches:
-            only: &id001 [development]
+            only: *id001
         requires: [scm]
     - check-doxygen-ubuntu-16.04-x64:
         filters:
@@ -516,11 +518,13 @@ workflows:
         requires: [scm]
   release-tests:
     jobs:
-    - scm
+    - scm:
+        filters:
+          branches: &id002 [release-test]
     - check-doxy-blocks-ubuntu-16.04-x64:
         filters:
           branches:
-            only: &id002 [release-test]
+            only: *id002
         requires: [scm]
     - check-doxygen-ubuntu-16.04-x64:
         filters:

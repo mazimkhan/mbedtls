@@ -102,7 +102,13 @@ def generate_jobs():
 
 
         if workflow_jobs:
-            workflow['jobs'] = ["scm"] + workflow_jobs
+            if job_name in circleci_branches:
+                scm_job = {"scm": {"filters": {
+                    "branches": circleci_branches[job_name]
+                } } }
+            else:
+                scm_job = "scm"
+            workflow['jobs'] = [scm_job] + workflow_jobs
             workflows[job_name] = workflow
 
     return jobs, workflows
