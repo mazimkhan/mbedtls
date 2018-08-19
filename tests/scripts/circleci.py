@@ -4,11 +4,12 @@ import yaml
 import json
 from build_info_parser import BuildInfo
 
-def print_yml():
-    with open(".circleci/config.yml", "r") as f:
-        y = yaml.load(f)
-        print json.dumps(y, indent=4)
-
+circleci_platforms = {
+    "ubuntu-16.04-x64" : {
+        "image": "armmbed/mbedtls-ubuntu-16.04:0.0.1",
+        "has" : ['linux']
+    }
+}
 
 def generate_jobs():
     jobs = dict()
@@ -18,9 +19,33 @@ def generate_jobs():
         workflow = dict()
         workflow_jobs = list()
         # Add 'scm' job
-        workflow_jobs.append("scm")
 
         for platform, build_name in build_info.get_builds_in_job(job_name):
+            circleci_job_name = "%s-%s" % (build_name, platform)
+
+            # Filter tests
+            build_data = build_info.get_build(build_name)
+            circleci_platform_info = circleci_platforms.get(platform, None)
+            if not circleci_platform_info:
+                print("Skipping job %s as image missing for platform '%s'"
+                    % (circleci_job_name, platform))
+                continue
+            docker_image = circleci_platform_info['image']
+            capabilities = circleci_platform_info.get('has', [])
+            requirements = build_data['requirements']
+            if requirements:
+                print("Build %s has requirements %s" % (build_name,
+                str(requirements)))
+                platform_is_suitable = True
+                for requirement in requirements:
+                    if requirement not in capabilities:
+                        platform_is_suitable = False
+                        print("Skipping job %s as requirement '%s' is missing"
+                        % (circleci_job_name, requirement))
+                        break
+                if not platform_is_suitable:
+                    continue
+
             #print "%s on %s" % (build_name, platform)
             job_config = dict()
             job_config["working_directory"] = "~/"
@@ -56,7 +81,6 @@ def generate_jobs():
             run_step["run"] = run_step_data
             steps.append(run_step)
             job_config["steps"] = steps
-            circleci_job_name = "%s-%s" % (build_name, platform)
             jobs[circleci_job_name] = job_config
 
             # Worflows
@@ -64,8 +88,9 @@ def generate_jobs():
             workflow_job[circleci_job_name] = { "requires": ["scm"]}
             workflow_jobs.append(workflow_job)
 
-        workflow['jobs'] = workflow_jobs
-        workflows[job_name] = workflow
+        if workflow_jobs:
+            workflow['jobs'] = ["scm"] + workflow_jobs
+            workflows[job_name] = workflow
 
     return jobs, workflows
 

@@ -387,7 +387,7 @@ data = {
             "campaigns": ["windows-tests"]
         }],
         "release-tests": [{
-            "platforms": ["ubuntu-17.10-x64"],
+            "platforms": ["ubuntu-16.04-x64"],
             "campaigns": ["all-tests"]
         }],
         "nightly": [{
@@ -400,7 +400,7 @@ data = {
             "platforms": ["windows-tls"],
             "campaigns": ["windows-tests"]
         }, {
-            "platforms": ["ubuntu-17.10-x64"],
+            "platforms": ["ubuntu-16.04-x64"],
             "campaigns": ["all-tests"]
         }]
     }

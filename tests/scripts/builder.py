@@ -51,7 +51,7 @@ class Build(object):
     CLEANUP_SCRIPT = './tests/scripts/cleanup.sh'
 
     def __init__(self, config, set_config, unset_config,
-                 build, script, environment, tests,
+                 build, script, environment, tests, requirements,
                  test_scripts):
         """
         Constructor expects mutually exclusive 'build' or 'script' to be passed by the creator. Rest of the parameters
@@ -64,6 +64,7 @@ class Build(object):
         :param script: Script to run instead of a build.
         :param environment: Build environment
         :param tests: List of tests. Either a script path or link into test_scripts.
+        :param requirements: List of labels representing requirements for the build
         :param test_scripts: dict of test scripts specified in build_info.py.
         """
         self.config = config
@@ -73,6 +74,7 @@ class Build(object):
         self.script = script
         self.environment = environment
         self.tests = tests
+        self.requirements = requirements
         self.test_scripts = test_scripts
 
     @staticmethod

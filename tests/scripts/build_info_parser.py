@@ -372,6 +372,7 @@ class BuildInfo(object):
         build_info["script"] = build_data.get("script", None)
         build_info["environment"] = build_data.get("environment", {})
         build_info["tests"] = build_data.get('tests', [])
+        build_info["requirements"] = build_data.get('requires', [])
         build_info["test_scripts"]=self.ci_data.get("test-scripts", {})
         return build_info
 
