@@ -24,4 +24,97 @@ This framework is part of Mbed TLS source, hence it is version controlled. It br
 - As part of version control the CI tests' data and tools are become subject to code reviews and CI tests. Hence, improving test system quality.
 
 
-## Getting started
+## Gist
+This section explains the setting up of CI data with the help of examples.
+
+The CI data is loaded from a python file: `mbedtls/tests/scripts/build_info.py` with the data in the form of Python objects. Three mandatory attributes **builds, campaigns and jobs** are required:
+```py
+data = {
+  "builds": {
+    ...
+  },
+  "campaigns": {
+    ...
+  },
+  "jobs": {
+    ...
+  }
+}
+```
+Add a build to the collection of `builds` as:
+```py
+data = {
+  "builds": {
+        "make-gcc": {
+            "build": "make",
+            "environment": {"MAKE": "make", "CC": "gcc"},
+            "tests": ["make test", "./programs/test/selftest"]
+        },
+        ...
+   }
+   ...
+}
+```
+Above term **build** is used, since tests are preceded by a build step with a particular configuration and toolchain. The tests for a build are specified as a list of commands.
+
+A group of builds creates a **campaign**:
+```py
+data = {
+  ...
+  "campaigns": {
+    "linux-tests1": ["make-gcc", "cmake", "cmake-full", "cmake-asan"],
+    ...
+  },
+  ...
+}
+```
+
+Next a CI job can be specified as a collection of campaigns with the target platforms.
+```py
+data = {
+    ...
+
+    "jobs": {
+        "nightly": [{
+            "platforms": ["debian-i386", "debian-x64"],
+            "campaigns": ["linux-tests1"]
+        }, {
+            "platforms": ["freebsd"],
+            "campaigns": ["linux-tests2"]
+        }, {
+            "platforms": ["windows-tls"],
+            "campaigns": ["windows-tests"]
+        }, {
+            "platforms": ["ubuntu-16.04-x64"],
+            "campaigns": ["all-tests"]
+        }]
+    },
+   ...
+}
+```
+
+For detailed description of the format please see **Format Reference**.
+
+## Tools
+CI data can be validated by running 
+```py
+mbedtls/tests/scripts/build_info_parser.py
+```
+`build_info_parser.py` can be executed to validate the data format. It is also imported by the other tools to validate and parse the data out of `build_info.py`.
+
+CI data can be introspected to create CI builds in a CI system with command:
+```py
+./tests/scripts/builder.py jobs -t <job name>
+
+debian-i386|cmake
+debian-i386|cmake-asan
+debian-i386|cmake-full
+...
+```
+
+A CI build can be an execution instance in the CI system that executes a build step and the associated tests.
+
+
+
+## Format Reference
+### Categorisation
