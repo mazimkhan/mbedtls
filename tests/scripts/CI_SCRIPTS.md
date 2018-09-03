@@ -1,4 +1,4 @@
-# Defining CI
+# CI scripts
 This document describes the data driven framework for Mbed TLS CI. This is composed of:
 
 - **Data format** for defining the CI jobs in a way that is agnostic to a particular CI system.
